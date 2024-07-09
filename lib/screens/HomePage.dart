@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sentiment_dart/sentiment_dart.dart';
-import 'package:sentimentapp/loadlexicon/fileClass.dart';
+import 'package:foodcateringwithsentimentanalysis/loadlexicon/fileClass.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
