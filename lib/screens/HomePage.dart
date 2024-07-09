@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sentiment_dart/sentiment_dart.dart';
-import 'package:foodcateringwithsentimentanalysis/loadlexicon/fileClass.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,13 +12,35 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   TextEditingController commentController = TextEditingController();
   SentimentResult result = Sentiment.analysis("h");
-  final LexiconStorage lexiconStorage = LexiconStorage();
-  var newWords = {'genius': 5.2};
+  Map<String, double> newWords = {'genius': 5.2, };
 
   @override
   void initState() {
     super.initState();
-    _loadLexicon();
+    getData();
+  }
+
+  getData() async {
+    String vaderData = await rootBundle.loadString('/vader_lexicon.txt');
+    parseLexiconData(vaderData);
+  }
+
+  void parseLexiconData(String data) {
+    final lines = data.split('\n');
+    for (var line in lines) {
+      if (line.trim().isEmpty) continue;
+      final parts = line.split('\t');
+      if (parts.length >= 2) {
+        final term = parts[0].trim();
+        final score = double.tryParse(parts[1].trim());
+        if (score != null) {
+          newWords[term] = score;
+        }
+      }
+    }
+    setState(() {
+      print(newWords);
+    });
   }
 
   void analyzeComment(String inputText) {
@@ -28,20 +50,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _loadLexicon() async {
-    final lexicon = await lexiconStorage.readLexicon();
-    if (mounted) {
-      setState(() {
-        print(lexicon);
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    commentController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
