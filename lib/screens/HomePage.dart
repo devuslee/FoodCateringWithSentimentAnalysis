@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sentiment_dart/sentiment_dart.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:huggingface_dart/huggingface_dart.dart';
+
+HfInference hfInference = HfInference('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');
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,17 +41,66 @@ class _HomePageState extends State<HomePage> {
         }
       }
     }
-    setState(() {
-      print(newWords);
-    });
   }
 
-  void analyzeComment(String inputText) {
-    setState(() {
-      result = Sentiment.analysis(inputText, customLang: newWords);
+  void analyzeComment(String inputText) async {
+    try {
+      final response = await hfInference.fillMask(
+        model: 'cardiffnlp/twitter-roberta-base-sentiment',
+        inputs: [inputText],
+      );
+
+      // THIS IS OLD AND INEFFICIENT CODE
+      // if (response[0][0]['label'] == "LABEL_0") {
+      //   response[0][0]['label'] = "negative";
+      // } else if (response[0][0]['label'] == "LABEL_1") {
+      //   response[0][0]['label'] = "neutral";
+      // } else if (response[0][0]['label'] == "LABEL_2") {
+      //   response[0][0]['label'] == "positive";
+      // }
+      //
+      // if (response[0][1]['label'] == "LABEL_0") {
+      //   response[0][1]['label'] = "negative";
+      // } else if (response[0][1]['label'] == "LABEL_1") {
+      //   response[0][1]['label'] = "neutral";
+      // } else if (response[0][1]['label'] == "LABEL_2") {
+      //   response[0][1]['label'] = "positive";
+      // }
+      //
+      // if (response[0][2]['label'] == "LABEL_0") {
+      //   response[0][2]['label'] = "negative";
+      // } else if (response[0][2]['label'] == "LABEL_1") {
+      //   response[0][2]['label'] = "neutral";
+      // } else if (response[0][2]['label'] == "LABEL_2") {
+      //   response[0][2]['label'] = "positive";
+      // }
+
+      //improved version
+      Map<String, String> labelMapping = {
+        'LABEL_0': 'negative',
+        'LABEL_1': 'neutral',
+        'LABEL_2': 'positive',
+      };
+
+      for (var i = 0; i < response[0].length; i++) {
+        String label = response[0][i]['label'];
+        if (labelMapping.containsKey(label)) {
+          response[0][i]['label'] = labelMapping[label];
+        }
+      }
+
+
+      print(response);
       print(result);
-    });
+
+      setState(() {
+        result = Sentiment.analysis(inputText, customLang: newWords);
+      });
+    } catch (e) {
+      print('Error occurred: $e');
+    }
   }
+
 
 
   @override
