@@ -13,6 +13,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List orders = [];
+  List filteredOrders = [];
 
   int totalmeals = 0;
   int totalcompletedorders = 0;
@@ -20,6 +21,8 @@ class _HomePageState extends State<HomePage> {
 
   String totalOrders = "";
   List<bool> isSelected = [true, false];
+
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -36,17 +39,37 @@ class _HomePageState extends State<HomePage> {
       totalordersLeft = await getTotalPendingOrders();
 
 
-      setState(() {
-        orders = orders;
-        totalOrders = orders.length.toString();
-        totalmeals = totalmeals;
-        totalcompletedorders = totalcompletedorders;
-        totalordersLeft = totalordersLeft;
-      });
-
+      if (mounted) {
+        setState(() {
+          orders = orders;
+          totalOrders = orders.length.toString();
+          filteredOrders = orders;
+          totalmeals = totalmeals;
+          totalcompletedorders = totalcompletedorders;
+          totalordersLeft = totalordersLeft;
+        });
+      }
     } catch (error) {
       print('Error fetching data: $error');
     }
+  }
+
+  Future<void> filterOrders(String query) async {
+    List filtered = [];
+    if (query.isEmpty) {
+      filtered = orders;
+    } else {
+      for (var order in orders) {
+        String tempUsername = await getUsername(order['userID']);
+        if (tempUsername.toLowerCase().contains(query.toLowerCase())) {
+          filtered.add(order);
+        }
+      }
+    }
+
+    setState(() {
+      filteredOrders = filtered;
+    });
   }
 
 
@@ -116,92 +139,112 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+            Text("Orders Today", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  labelText: "Search by Name",
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  filterOrders(value);
+                },
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+            if (filteredOrders.isEmpty)
+              Column(
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                  Icon(Icons.hourglass_empty, size: MediaQuery.of(context).size.width * 0.2, color: Colors.grey),
+                  Text("No Orders Found", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025, color: Colors.grey)),
+
+                ],
+              ),
+
+            if (filteredOrders.isNotEmpty)
             ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
-              itemCount: orders.length,
+              itemCount: filteredOrders.length,
               itemBuilder: (context, index) {
-                orders[index]['isExpanded'] = false;
                 return Container(
                   width: MediaQuery.of(context).size.width * 0.9,
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(color: Colors.grey),
                       top: index == 0 ? BorderSide(color: Colors.grey) : BorderSide(color: Colors.white),
-                    )
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            FutureBuilder(
-                                future: getUsername(orders[index]['userID']),
-                                builder: (context, snapshot) {
-                                  return Text("User: ${snapshot.data.toString()}");
-                                }
-                                ),
-                            Text("Order ID: ${orders[index]['id']}"),
-                          ]
-                      ),
-                      Spacer(),
-                      ElevatedButton(
-                          onPressed: (){
-                            updateOrderStatus(orders[index]['id'].toString(), orders[index]['userID'].toString(), "Pending");
+                  child: ExpansionTile(
+                    title: FutureBuilder(
+                      future: getUsername(filteredOrders[index]['userID']),
+                      builder: (context, snapshot) {
+                        return Text("User: ${snapshot.data}");
+                      },
+                    ),
+                    subtitle: Text("Order ID: ${filteredOrders[index]['id']}"),
+                    trailing: Container(
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      child: ElevatedButton(
+                        onPressed: filteredOrders[index]['status'] == 'Completed' ? () {} : () {
+                          if (filteredOrders[index]['status'] == "Pending") {
+                            updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Ready");
                             setState(() {
-                              orders[index]['status'] = "Pending";
+                              filteredOrders[index]['status'] = "Ready";
                             });
-                          },
-                          child: Text("Pending"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: orders[index]['status'] == "Pending" ? Colors.yellow : Colors.white,
-                            side: BorderSide(
-                              color: Colors.grey,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(0.0),
-                            ),
-                          )
-                      ),
-                      ElevatedButton(
-                          onPressed: (){
-                            updateOrderStatus(orders[index]['id'].toString(), orders[index]['userID'].toString(), "Completed");
+                          }
+                          else if (filteredOrders[index]['status'] == "Ready") {
+                            updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Pending");
                             setState(() {
-                              orders[index]['status'] = "Completed";
+                              filteredOrders[index]['status'] = "Pending";
                             });
-                          },
-                          child: Text("Ready"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: orders[index]['status'] == "Completed" ? Colors.green : Colors.white,
-                            side: BorderSide(
-                              color: Colors.grey,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(0.0),
-                            ),
-                          )
-                      ),
-                      IconButton(
-                        icon: Icon(orders[index]['isExpanded']
-                            ? Icons.expand_less
-                            : Icons.expand_more),
-                        onPressed: () {
-                          setState(() {
-                            if (orders[index]['isExpanded'] == true)
-                              orders[index]['isExpanded'] = false;
-                            else
-                              orders[index]['isExpanded'] = true;
-                          });
+                          }
                         },
+                        child: Text(filteredOrders[index]['status']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: filteredOrders[index]['status'] == "Pending"
+                              ? Colors.yellow
+                              : Colors.green,
+                          side: BorderSide(color: Colors.grey),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(0.0),
+                          ),
+                        ),
+                      ),
+                    ),
+                    children: [
+                      Divider(color: Colors.black),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Pickup Time: ${HourFormatter(filteredOrders[index]['desiredPickupTime'])}"),
+                            Text("Payment Method: ${filteredOrders[index]['paymentMethod']}"),
+                            Text("Total: RM${filteredOrders[index]['total']}"),
+                            if (filteredOrders[index]['specialRemarks'] != "")
+                            Text("Special Remarks: ${filteredOrders[index]['specialRemarks']}"),
+                            Divider(),
+                            for (var i = 0; i < filteredOrders[index]['orderHistory'].length; i++)
+                              Row(
+                                children: [
+                                  Text("${filteredOrders[index]['orderHistory'][i]['name']}"),
+                                  Spacer(),
+                                  Text("x${filteredOrders[index]['orderHistory'][i]['quantity']}"),
+                                ],
+                              ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 );
-              }
-            )
-
-        
-        
+              },
+            ),
           ],
         ),
       )
