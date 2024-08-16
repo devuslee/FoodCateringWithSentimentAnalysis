@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
@@ -34,7 +36,6 @@ class _CommentsPageState extends State<CommentsPage> {
       reviews = await returnTodayReviews();
       allReviews = await returnAllReviews(selectedTime);
       menu = await getMenu();
-      print(reviews[menu[0]]);
 
       if (mounted) {
         setState(() {
@@ -51,7 +52,6 @@ class _CommentsPageState extends State<CommentsPage> {
 
   void updateReviews() async {
     try {
-
       allReviews = await returnAllReviews(selectedTime);
 
       if (mounted) {
@@ -139,6 +139,18 @@ class _CommentsPageState extends State<CommentsPage> {
                           physics: NeverScrollableScrollPhysics(),
                           itemCount: allReviews[item]?.length ?? 0,
                           itemBuilder: (context, index) {
+                            String comment = '';
+                            double positive = allReviews[item]?[index]['positive'];
+                            double neutral = allReviews[item]?[index]['neutral'];
+                            double negative = allReviews[item]?[index]['negative'];
+                            double highest = max(positive, max(neutral, negative));
+                            if (highest == positive) {
+                              comment = 'positive';
+                            } else if (highest == neutral) {
+                              comment = 'neutral';
+                            } else if (highest == negative) {
+                              comment = 'negative';
+                            }
                             return Column(
                               children: [
                                 Container(
@@ -214,17 +226,42 @@ class _CommentsPageState extends State<CommentsPage> {
                                                         allReviews[item]?[index]['createdAt']),
                                                         style: TextStyle(
                                                             fontSize: MediaQuery.of(context).size.height * 0.02)
-                                                    )
+                                                    ),
                                                   ],
                                                 ),
-                                                Text(allReviews[item]?[index]['comment'],
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                        "Overall Sentiment: ",
+                                                        style: TextStyle(
+                                                            fontSize: MediaQuery.of(context).size.height * 0.025,
+                                                            color: Colors.grey
+                                                        )
+                                                    ),
+                                                    Text("${comment}",
+                                                        style: TextStyle(
+                                                            fontSize: MediaQuery.of(context).size.height * 0.03,
+                                                            color: comment == "positive" ? Colors.green : comment == "negative" ? Colors.red : Colors.yellow
+                                                        )
+                                                    ),
+                                                  ],
+                                                ),
+                                                Container(
+                                                  width: MediaQuery.of(context).size.width * 0.9,
+                                                  child: Text(
+                                                    allReviews[item]?[index]['comment'],
                                                     style: TextStyle(
-                                                        fontSize: MediaQuery.of(context).size.height * 0.02)
+                                                      fontSize: MediaQuery.of(context).size.height * 0.02,
+                                                    ),
+                                                    maxLines: null, // Allows the text to use as many lines as needed
+                                                    overflow: TextOverflow.visible, // Ensures overflowed text is visible
+                                                    softWrap: true, // Ensures text wraps to the next line
+                                                  ),
                                                 ),
                                               ]
                                             )
                                           ],
-                                        )
+                                        ),
                                       ]
                                     ),
                                   )

@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/HomePage.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:foodcateringwithsentimentanalysis/screens/LoginPage.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/NavigationPage.dart';
 
 void main() async {
@@ -14,37 +16,31 @@ void main() async {
       storageBucket: 'foodcatering-6bb02.appspot.com',
     ),
   );
-  runApp(const MyApp());
+
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    // User is signed in
+    runApp(MyApp(home: NavigationPage()));
+  } else {
+    // User is not signed in
+    runApp(MyApp(home: LoginPage()));
+  }
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget home;
 
-  // This widget is the root of your application.
+  const MyApp({Key? key, required this.home}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: NavigationPage(),
+      home: home,
     );
   }
 }

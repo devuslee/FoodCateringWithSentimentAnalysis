@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/AnalysisPage.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/HomePage.dart';
+import 'package:foodcateringwithsentimentanalysis/screens/MenuPage.dart';
 import 'package:icon_badge/icon_badge.dart';
 
 
@@ -37,8 +38,7 @@ class _NavigationPageState extends State<NavigationPage> {
     return [
       HomePage(),
       AnalysisPage(),
-      Placeholder(),
-      Placeholder(),
+      MenuPage(),
       Placeholder(),
     ];
   }
@@ -46,7 +46,7 @@ class _NavigationPageState extends State<NavigationPage> {
   final IconList = [
     Icons.home,
     Icons.redeem,
-    Icons.history,
+    Icons.menu,
     Icons.person,
   ];
 
@@ -83,7 +83,7 @@ class _NavigationPageState extends State<NavigationPage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Text(
-                        index == 0 ? 'Home' : index == 1 ? 'Analysis' : index == 2 ? 'History' : index == 3 ? 'Profile' : '',
+                        index == 0 ? 'Home' : index == 1 ? 'Analysis' : index == 2 ? 'Menu' : index == 3 ? 'Profile' : '',
                         maxLines: 1,
                         style: TextStyle(color: color),
                       ),

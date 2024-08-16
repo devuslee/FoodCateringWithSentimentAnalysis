@@ -169,6 +169,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.2.0"
+  equatable:
+    dependency: transitive
+    description:
+      name: equatable
+      sha256: c2b87cb7756efdf69892005af546c56c0b5037f54d2a88269b4f347a505e3ca2
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.5"
   fake_async:
     dependency: transitive
     description:
@@ -305,6 +313,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+  fl_chart:
+    dependency: "direct main"
+    description:
+      name: fl_chart
+      sha256: d0f0d49112f2f4b192481c16d05b6418bd7820e021e265a3c22db98acf7ed7fb
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.68.0"
   floating_snackbar:
     dependency: "direct main"
     description:
@@ -837,6 +853,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.4"
+  vertical_barchart:
+    dependency: "direct main"
+    description:
+      name: vertical_barchart
+      sha256: "60418bef71be7828a4d8300da4c1d8f355a0647c133dc9a0ebf27e2e0b7592ca"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0+2"
   vm_service:
     dependency: transitive
     description:
@@ -861,6 +885,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.5.0"
+  word_cloud:
+    dependency: "direct main"
+    description:
+      name: word_cloud
+      sha256: ca3d6767562baebf221008ed002917f4d0bc451b485fdb30800be6b30e99ae0f
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
   xdg_directories:
     dependency: transitive
     description:
