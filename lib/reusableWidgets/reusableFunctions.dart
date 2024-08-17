@@ -15,14 +15,15 @@ HfInference hfInference = HfInference('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');
 
 
 
-Future<List<Map<String, dynamic>>> returnAllOrders() async {
+Future<List<Map<String, dynamic>>> returnAllOrders(String selectedTime) async {
   List<Map<String, dynamic>> orders = [];
+  print(selectedTime.split(' ')[0]);
 
   //actual code
   final orderRef = FirebaseFirestore.instance
       .collection('admin')
       .doc('orders')
-      .collection(DateTime.now().toString().split(' ')[0]);
+      .collection(selectedTime.split(' ')[0]);
 
 
   // final orderRef = FirebaseFirestore.instance
@@ -308,6 +309,54 @@ Future<List> getCategory() async {
   return category;
 }
 
+Future<void> addCategory(String categoryName) async {
+  final categoryRef = FirebaseFirestore.instance.collection('category').doc(categoryName);
+  List category = await getCategory();
+
+  for (var item in category) {
+    if (item == categoryName) {
+      print('item already exist');
+      return;
+    }
+  }
+
+  try {
+    await categoryRef.set({
+      'type': categoryName,
+    });
+  } catch (e) {
+    print('Failed to add category: $e');
+  }
+}
+
+Future<void> removeCategory(String categoryName) async {
+  final categoryRef = FirebaseFirestore.instance.collection('category').doc(categoryName);
+
+  try {
+    await categoryRef.delete();
+    await removeMenuUnderCategory(categoryName);
+  } catch (e) {
+    print('Failed to add category: $e');
+  }
+}
+
+Future<void> removeMenuUnderCategory(String categoryName) async {
+  final menuRef = FirebaseFirestore.instance.collection('menu');
+
+  try {
+    await menuRef.get().then((querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        if (doc.data()?['category'] == categoryName) {
+          doc.reference.delete();
+        }
+      });
+    });
+  } catch (e) {
+    print('Failed to add category: $e');
+  }
+}
+
+
 Future<int> getMenuCounter() async {
   int counter = 0;
 
@@ -320,13 +369,13 @@ Future<int> getMenuCounter() async {
   return counter;
 }
 
-Future<int> getTotalMeals() async {
+Future<int> getTotalMeals(String selectedDate) async {
   int totalMeals = 0;
 
   final orderRef = FirebaseFirestore.instance
       .collection('admin')
       .doc('orders')
-      .collection(DateTime.now().toString().split(' ')[0]);
+      .collection(selectedDate.split(' ')[0]);
 
   await orderRef.get().then((querySnapshot) {
     querySnapshot.docs.forEach((doc) {
@@ -339,13 +388,13 @@ Future<int> getTotalMeals() async {
   return totalMeals;
 }
 
-Future<int> getTotalCompletedOrders() async {
+Future<int> getTotalCompletedOrders(String selectedDate) async {
   int totalOrders = 0;
 
   final orderRef = FirebaseFirestore.instance
       .collection('admin')
       .doc('orders')
-      .collection(DateTime.now().toString().split(' ')[0]);
+      .collection(selectedDate.split(' ')[0]);
 
   await orderRef.get().then((querySnapshot) {
     querySnapshot.docs.forEach((doc) {
@@ -360,13 +409,13 @@ Future<int> getTotalCompletedOrders() async {
 }
 
 
-Future<int> getTotalPendingOrders() async {
+Future<int> getTotalPendingOrders(String selectedDate) async {
   int pendingOrders = 0;
 
   final orderRef = FirebaseFirestore.instance
       .collection('admin')
       .doc('orders')
-      .collection(DateTime.now().toString().split(' ')[0]);
+      .collection(selectedDate.split(' ')[0]);
 
   await orderRef.get().then((querySnapshot) {
     querySnapshot.docs.forEach((doc) {
@@ -421,7 +470,7 @@ Future<String> getMenuImage(String imageURL) async {
 
 
 
-void updateOrderStatus(String orderID, String userID, String status) async {
+void updateOrderStatus(String orderID, String userID, String status, String selectedDate) async {
 
   final userRef = FirebaseFirestore
       .instance
@@ -434,7 +483,7 @@ void updateOrderStatus(String orderID, String userID, String status) async {
       .instance
       .collection('admin')
       .doc('orders')
-      .collection(DateTime.now().toString().split(' ')[0])
+      .collection(selectedDate.split(' ')[0])
       .doc(orderID);
 
    userRef.update({

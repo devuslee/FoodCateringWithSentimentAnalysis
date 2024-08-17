@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableWidgets.dart';
 
 import '../reusableWidgets/reusableFunctions.dart';
@@ -22,6 +23,7 @@ class _AddMenuPageState extends State<AddMenuPage> {
   TextEditingController priceController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController categoryController = TextEditingController();
+  TextEditingController deleteCategoryController = TextEditingController();
 
 
   PlatformFile? _selectedFile;
@@ -46,7 +48,6 @@ class _AddMenuPageState extends State<AddMenuPage> {
       category = await getCategory();
       counter = await getMenuCounter();
       menuImage = "food_$counter";
-      print("Menu Image: ${menuImage}"); // food_1
       menuName = "food_$counter";
 
       defaultImageDownload = await getMenuImage("blank_menu");
@@ -63,6 +64,35 @@ class _AddMenuPageState extends State<AddMenuPage> {
     }
   }
 
+  void updateCategory() async {
+    await addCategory(categoryController.text);
+    categoryController.clear();
+
+    category = await getCategory();
+
+    if (mounted) {
+      setState(() {
+        category = category;
+        firstCategory = category[0];
+      });
+    }
+  }
+
+  void deleteCategory() async {
+    if (deleteCategoryController.text.isNotEmpty) {
+      await removeCategory(deleteCategoryController.text);
+      deleteCategoryController.clear();
+
+      category = await getCategory();
+
+      if (mounted) {
+        setState(() {
+          category = category;
+          firstCategory = category[0];
+        });
+      }
+    }
+  }
 
   Future selectFile() async {
     final result = await FilePicker.platform.pickFiles();
@@ -106,164 +136,308 @@ class _AddMenuPageState extends State<AddMenuPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-            children:[
-              ReusableAppBar(title: "Add Menu", backButton: true),
-              SizedBox(height: MediaQuery.of(context).size.width * 0.01),
-              Stack(
-                children: [
-                  Container(
-                    width: 200,
-                    height: 200,
-                    child: _selectedFile != null
-                        ? Image.file(
-                      File(_selectedFile!.path!),
-                      fit: BoxFit.cover,
-                    )
-                        :
-                    FutureBuilder(
-                      future: getMenuImage("blank_menu"),
-                      builder: (context, snapshot) {
-                        return  CachedNetworkImage(
-                          imageUrl: snapshot.data.toString(),
-                          imageBuilder: (context, imageProvider) => Container(
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
+      body: SingleChildScrollView(
+        child: Stack(
+          children: [
+            Column(
+              children:[
+                ReusableAppBar(title: "Add Menu", backButton: true),
+                SizedBox(height: MediaQuery.of(context).size.width * 0.01),
+                Stack(
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.2,
+                      height: MediaQuery.of(context).size.width * 0.2,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: _selectedFile != null
+                          ? Image.file(
+                        File(_selectedFile!.path!),
+                        fit: BoxFit.cover,
+                      )
+                          :
+                      FutureBuilder(
+                        future: getMenuImage("blank_menu"),
+                        builder: (context, snapshot) {
+                          return  CachedNetworkImage(
+                            imageUrl: snapshot.data.toString(),
+                            imageBuilder: (context, imageProvider) => Container(
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
-                          ),
-                          placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
-                          errorWidget: (context, url, error) =>
-                              Text('Error: $error'),
-                        );
-                      },
+                            placeholder: (context, url) =>
+                            const Center(child: CircularProgressIndicator()),
+                            errorWidget: (context, url, error) =>
+                                Text('Error: $error'),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: InkWell(
-                      onTap: selectFile,
-                      child: Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black),
-                        ),
-                        child: const Icon(
-                          Icons.edit,
-                          color: Colors.black,
-                          size: 20,
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap: selectFile,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black),
+                          ),
+                          child: const Icon(
+                            Icons.edit,
+                            color: Colors.black,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ReusableTextField(
-                  labelText: "Name",
-                  controller: nameController,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  maxLines: 3,
-                  controller: descriptionController,
-                  style: TextStyle(
-                    color: Colors.black,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: "Description",
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  controller: priceController,
-                  style: TextStyle(
-                    color: Colors.black,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: "Price",
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
                   ],
                 ),
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
+                SizedBox(height: MediaQuery.of(context).size.width * 0.01),
+                Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Category"),
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                        ),
-                        child: DropdownButton(
-                          padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-                          value: firstCategory,
-                          items: category.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              firstCategory = value.toString();
-                            });
-                          },
-                        ),
-                      ),
+                  child: ReusableTextField(
+                    labelText: "Name",
+                    controller: nameController,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    maxLines: 3,
+                    controller: descriptionController,
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: "Description",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: priceController,
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: "Price",
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
                     ],
                   ),
                 ),
-              ),
-            ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Category"),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                              ),
+                              child: DropdownButton(
+                                padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
+                                value: firstCategory,
+                                items: category.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    firstCategory = value.toString();
+                                  });
+                                },
+                              ),
+                            ),
+                            SizedBox(width: MediaQuery.of(context).size.width * 0.01,),
+                            ElevatedButton(
+                                onPressed: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return StatefulBuilder(
+                                            builder: (context, setState) {
+                                            return AlertDialog(
+                                              title: Text("Add Category"),
+                                              content: TextField(
+                                                controller: categoryController,
+                                                decoration: InputDecoration(
+                                                  labelText: "Category",
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Text("Cancel"),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      updateCategory();
+                                                    });
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Text("Add"),
+                                                ),
+                                              ],
+                                            );
+                                        }
+                                        );
+                                      }
+                                  );
+                                },
+                                child: Text("Add Category"),
+                            ),
+                            SizedBox(width: MediaQuery.of(context).size.width * 0.01,),
+                            ElevatedButton(
+                              onPressed: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return StatefulBuilder(
+                                          builder: (context, setState) {
+                                            return AlertDialog(
+                                              title: Text("Delete Category"),
+                                              content: Container(
+                                                child: SingleChildScrollView(
+                                                  child: Column(
+                                                    children: [
+                                                      for (int i = 0; i < category.length; i++)
+                                                        Container(
+                                                          decoration: BoxDecoration(
+                                                            border: Border.all(color: Colors.grey),
+                                                            color: deleteCategoryController.text == category[i] ? Colors.blue.withOpacity(0.5) : Colors.white,
+                                                          ),
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                deleteCategoryController.text = category[i];
+                                                              });
+                                                            },
+                                                            child: Padding(
+                                                              padding: const EdgeInsets.all(8.0),
+                                                              child: Row(
+                                                                children: [
+                                                                  Text(
+                                                                    category[i],
+                                                                    style: TextStyle(
+                                                                      color: deleteCategoryController.text == category[i] ? Colors.white : Colors.black,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  ),
+                                                ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Text("Cancel"),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (BuildContext context) {
+                                                          return AlertDialog(
+                                                            title: Text("Delete Category"),
+                                                            content: Text("Are you sure you want to delete this category? This will also delete all the menus under this category."),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () {
+                                                                  Navigator.pop(context);
+                                                                },
+                                                                child: Text("Cancel"),
+                                                              ),
+                                                              TextButton(
+                                                                onPressed: () {
+                                                                  setState(() {
+                                                                    deleteCategory();
+                                                                  });
+                                                                  Navigator.pop(context);
+                                                                  Navigator.pop(context);
+                                                                },
+                                                                child: Text("Delete"),
+                                                              ),
+                                                            ],
+                                                          );
+                                                        }
+                                                    );
+                                                  },
+                                                  child: Text("Delete"),
+                                                ),
+                                              ],
+                                            );
+                                          }
+                                      );
+                                    }
+                                );
+                              },
+                              child: Text("Delete Category"),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-          ),
-          Positioned(
-            bottom: 16,  // Adjust the padding as needed
-            right: 16,   // Adjust the padding as needed
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.black),
+                  ),
+                ),
+              ],
               ),
-              child: IconButton(
-                onPressed: () {
-                  if (_selectedFile == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please select an image'),
-                      ),
-                    );
-                    return;
-                  }
-                  uploadFile();
-                  addMenu(nameController.text, descriptionController.text, firstCategory, double.parse(priceController.text), menuImage);
-                  Navigator.pop(context, true);
-                },
-                icon: const Icon(Icons.add),
-                iconSize: MediaQuery.of(context).size.width * 0.05, // Adjust the size as needed
+            Positioned(
+              bottom: 16,  // Adjust the padding as needed
+              right: 16,   // Adjust the padding as needed
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    if (_selectedFile == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select an image'),
+                        ),
+                      );
+                      return;
+                    }
+                    uploadFile();
+                    addMenu(nameController.text, descriptionController.text, firstCategory, double.parse(priceController.text), menuImage);
+                    Navigator.pop(context, true);
+                  },
+                  icon: const Icon(Icons.add),
+                  iconSize: MediaQuery.of(context).size.width * 0.05, // Adjust the size as needed
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

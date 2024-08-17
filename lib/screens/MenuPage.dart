@@ -32,6 +32,8 @@ class _MenuPageState extends State<MenuPage> {
       categoryItems = await getCategory();
       firstCategory = categoryItems[0];
       menu = await getMenuCategory(firstCategory);
+      print("Category Items: ${categoryItems}");
+      print("Category first: ${firstCategory}");
 
 
       if (mounted) {
@@ -98,13 +100,19 @@ class _MenuPageState extends State<MenuPage> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      onPressed: () {
-                        Navigator.push(
+                      onPressed: () async {
+                        bool isRefresh = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => AddMenuPage(),
                           ),
                         );
+
+                        if (isRefresh == true) {
+                          setState(() {
+                            fetchData();
+                          });
+                        }
                       },
                       icon: Icon(Icons.add),
                       color: Colors.green,
@@ -183,7 +191,7 @@ class _MenuPageState extends State<MenuPage> {
 
                                                 if (isRefresh == true) {
                                                   setState(() {
-                                                    updateDropDown();
+                                                    fetchData();
                                                   });
                                                 }
                                               },

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableWidgets.dart';
 
@@ -20,6 +21,10 @@ class _HomePageState extends State<HomePage> {
   int totalordersLeft = 0;
 
   String totalOrders = "";
+  String selectedDateTime = DateTime.now().toString().split(" ")[0];
+
+  DateTime selectedDate = DateTime.now();
+
   List<bool> isSelected = [true, false];
 
   TextEditingController searchController = TextEditingController();
@@ -33,10 +38,10 @@ class _HomePageState extends State<HomePage> {
 
   void fetchData() async {
     try {
-      orders = await returnAllOrders();
-      totalmeals = await getTotalMeals();
-      totalcompletedorders = await getTotalCompletedOrders();
-      totalordersLeft = await getTotalPendingOrders();
+      orders = await returnAllOrders(selectedDateTime);
+      totalmeals = await getTotalMeals(selectedDateTime);
+      totalcompletedorders = await getTotalCompletedOrders(selectedDateTime);
+      totalordersLeft = await getTotalPendingOrders(selectedDateTime);
 
 
       if (mounted) {
@@ -72,6 +77,26 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _incrementDate() {
+    setState(() {
+      selectedDate = selectedDate.add(Duration(days: 1));
+      selectedDateTime = selectedDate.toString().split(" ")[0];
+      setState(() {
+        fetchData();
+      });
+    });
+  }
+
+  void _decrementDate() {
+    setState(() {
+      selectedDate = selectedDate.subtract(Duration(days: 1));
+      selectedDateTime = selectedDate.toString().split(" ")[0];
+      setState(() {
+        fetchData();
+      });
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +105,49 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             ReusableAppBar(title: "Home Page", backButton: false),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: _decrementDate,
+                  icon: Icon(
+                    Icons.arrow_left,
+                    size: 50,
+                  ),
+                ),
+                InkWell(
+                  onTap: () async {
+                    DateTime? date = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2021),
+                      lastDate: DateTime(2025),
+                    );
+
+                    if (date != null) {
+                      selectedDateTime = date.toString().split(" ")[0];
+                      setState(() {
+                        fetchData();
+                      });
+                    }
+                  },
+                  child: Text(
+                    selectedDateTime,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _incrementDate,
+                  icon: Icon(
+                    Icons.arrow_right,
+                    size: 50,
+                  ),
+                ),
+              ],
+            ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             Container(
               width: MediaQuery.of(context).size.width * 0.9,
@@ -140,8 +208,9 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             Text("Orders Today", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025)),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.all(8.0),
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
@@ -161,7 +230,6 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                   Icon(Icons.hourglass_empty, size: MediaQuery.of(context).size.width * 0.2, color: Colors.grey),
                   Text("No Orders Found", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025, color: Colors.grey)),
-
                 ],
               ),
 
@@ -192,13 +260,13 @@ class _HomePageState extends State<HomePage> {
                       child: ElevatedButton(
                         onPressed: filteredOrders[index]['status'] == 'Completed' ? () {} : () {
                           if (filteredOrders[index]['status'] == "Pending") {
-                            updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Ready");
+                            updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Ready", selectedDateTime);
                             setState(() {
                               filteredOrders[index]['status'] = "Ready";
                             });
                           }
                           else if (filteredOrders[index]['status'] == "Ready") {
-                            updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Pending");
+                            updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Pending", selectedDateTime);
                             setState(() {
                               filteredOrders[index]['status'] = "Pending";
                             });

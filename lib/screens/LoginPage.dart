@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
 
                   invalidCredentials = false;
                   FirebaseAuth.instance.signInWithEmailAndPassword(
-                      email: "devuslee1@yahoo.com",
+                      email: "admin@yahoo.com",
                       password: "123123"
                   ).then((value)  {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => NavigationPage()));
