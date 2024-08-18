@@ -32,9 +32,6 @@ class _MenuPageState extends State<MenuPage> {
       categoryItems = await getCategory();
       firstCategory = categoryItems[0];
       menu = await getMenuCategory(firstCategory);
-      print("Category Items: ${categoryItems}");
-      print("Category first: ${firstCategory}");
-
 
       if (mounted) {
         setState(() {

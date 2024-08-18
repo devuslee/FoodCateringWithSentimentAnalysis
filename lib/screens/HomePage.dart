@@ -119,7 +119,7 @@ class _HomePageState extends State<HomePage> {
                   onTap: () async {
                     DateTime? date = await showDatePicker(
                       context: context,
-                      initialDate: DateTime.now(),
+                      initialDate: DateTime.parse(selectedDateTime),
                       firstDate: DateTime(2021),
                       lastDate: DateTime(2025),
                     );
@@ -132,7 +132,7 @@ class _HomePageState extends State<HomePage> {
                     }
                   },
                   child: Text(
-                    selectedDateTime,
+                    DayMonthYearFormatter(selectedDateTime),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -258,7 +258,8 @@ class _HomePageState extends State<HomePage> {
                     trailing: Container(
                       width: MediaQuery.of(context).size.width * 0.15,
                       child: ElevatedButton(
-                        onPressed: filteredOrders[index]['status'] == 'Completed' ? () {} : () {
+                        onPressed: filteredOrders[index]['status'] == 'Completed' ? () {}
+                            : filteredOrders[index]['status'] == 'Completed' ? () {} : () {
                           if (filteredOrders[index]['status'] == "Pending") {
                             updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Ready", selectedDateTime);
                             setState(() {

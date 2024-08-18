@@ -398,12 +398,11 @@ Future<int> getTotalCompletedOrders(String selectedDate) async {
 
   await orderRef.get().then((querySnapshot) {
     querySnapshot.docs.forEach((doc) {
-      if (doc.data()['status'] == 'Completed') {
+      if (doc.data()['status'] == 'Completed' || doc.data()['status'] == 'Completed and Reviewed') {
         totalOrders = totalOrders + 1;
       }
     });
   });
-
 
   return totalOrders;
 }
@@ -965,5 +964,23 @@ String wordLimit(String text, int wordLimit) {
     return words.take(wordLimit).join(' ') + '...';
   } else {
     return text;
+  }
+}
+
+//parsing vader lexicon
+void parseLexiconData(String data) {
+  Map<String, double> newWords = {'genius': 5.2, };
+
+  final lines = data.split('\n');
+  for (var line in lines) {
+    if (line.trim().isEmpty) continue;
+    final parts = line.split('\t');
+    if (parts.length >= 2) {
+      final term = parts[0].trim();
+      final score = double.tryParse(parts[1].trim());
+      if (score != null) {
+        newWords[term] = score;
+      }
+    }
   }
 }

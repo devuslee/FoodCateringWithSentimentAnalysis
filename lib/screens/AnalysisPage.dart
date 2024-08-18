@@ -26,8 +26,6 @@ class AnalysisPage extends StatefulWidget {
 
 class _AnalysisPageState extends State<AnalysisPage> {
   TextEditingController commentController = TextEditingController();
-  SentimentResult result = Sentiment.analysis("h");
-  Map<String, double> newWords = {'genius': 5.2, };
 
   Map<String, List<Map<String, dynamic>>> reviews = {};
   List<dynamic> test1 = [];
@@ -54,6 +52,10 @@ class _AnalysisPageState extends State<AnalysisPage> {
   List<VBarChartModel> bardata = [];
   List<VBarChartModel> menuRating = [];
 
+  bool wordCloudGreaterThanOne = false;
+
+  List categoryItems = [];
+  String firstCategory = 'Loading...';
 
 
   @override
@@ -64,7 +66,6 @@ class _AnalysisPageState extends State<AnalysisPage> {
 
   void fetchData() async {
     try {
-
       menu = await getMenu();
       rating = await returnRating(selectedTime);
       totalReviews = await returnTotalReview(selectedTime);
@@ -74,6 +75,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
       bardata = await returnBarData(selectedTime);
       menuRating = await returnMenuRating(selectedTime);
       counter = await returnWordCloudCounter(selectedTime);
+      categoryItems = await getCategory();
+      firstCategory = categoryItems[0];
 
       if (mounted) {
         setState(() {
@@ -83,8 +86,11 @@ class _AnalysisPageState extends State<AnalysisPage> {
           totalSale = totalSale;
           overallSentiment = overallSentiment;
           wcdata = WordCloudData(data: wordCloud);
+          wordCloudGreaterThanOne = hasValueGreaterThanOne(wcdata.data);
+          print(wordCloudGreaterThanOne);
           bardata = bardata;
           counter= counter;
+          categoryItems = categoryItems;
         });
       }
     } catch (error) {
@@ -92,23 +98,27 @@ class _AnalysisPageState extends State<AnalysisPage> {
     }
   }
 
-  //parsing vader lexicon
-  void parseLexiconData(String data) {
-    final lines = data.split('\n');
-    for (var line in lines) {
-      if (line.trim().isEmpty) continue;
-      final parts = line.split('\t');
-      if (parts.length >= 2) {
-        final term = parts[0].trim();
-        final score = double.tryParse(parts[1].trim());
-        if (score != null) {
-          newWords[term] = score;
-        }
+  bool hasValueGreaterThanOne(List<Map<dynamic,dynamic>> data) {
+    for (var item in data) {
+      if (item['value'] > 1) {
+        return true;
       }
     }
+    return false;
   }
 
-
+  void updateDropDown() async {
+    try {
+      categoryItems = await getCategory();
+      if (mounted) {
+        setState(() {
+          categoryItems = categoryItems;
+        });
+      }
+    } catch (error) {
+      print('Error fetching data: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,16 +128,34 @@ class _AnalysisPageState extends State<AnalysisPage> {
           children: [
             ReusableAppBar(title: "Analysis", backButton: false),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-            DropdownButton(
-              padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-              value: selectedTime,
-              items: timeOptions.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedTime = value.toString();
-                  fetchData();
-                });
-              },
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                DropdownButton(
+                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
+                  value: selectedTime,
+                  items: timeOptions.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedTime = value.toString();
+                      fetchData();
+                    });
+                  },
+                ),
+                SizedBox(width: MediaQuery.of(context).size.width * 0.01),
+                DropdownButton(
+                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
+                  value: firstCategory,
+                  items: categoryItems.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      firstCategory = value.toString();
+                      print(firstCategory);
+                      updateDropDown();
+                    });
+                  },
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.all(32.0),
@@ -391,7 +419,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
                                 ),
                               ),
                               SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                              if (counter < 2)
+                              if (counter < 2 || wordCloudGreaterThanOne == false)
                                 Column(
                                   children: [
                                     SizedBox(height: MediaQuery.of(context).size.height * 0.10),
@@ -399,7 +427,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
                                   ],
                                 ),
 
-                              if (counter > 1)
+                              if (counter > 1 && wordCloudGreaterThanOne == true)
                                 WordCloudView(
                                   key: ValueKey(wcdata),
                                   data: wcdata,
