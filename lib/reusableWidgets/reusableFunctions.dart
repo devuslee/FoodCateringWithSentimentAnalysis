@@ -118,7 +118,7 @@ Future<Map<String, List<Map<String, dynamic>>>> returnAllReviews(String timeRang
   return reviewsByMenu;
 }
 
-Future<double> returnRating(String timeRange) async {
+Future<double> returnRating(String timeRange, String selectedFood) async {
   double totalRating = 0;
   double counter = 0;
   double averageRating = 0;
@@ -145,12 +145,31 @@ Future<double> returnRating(String timeRange) async {
     startDate = DateTime.now();
   }
 
+  print(selectedFood);
 
-  for (var item in menu) {
+  if (selectedFood == 'Default') {
+    for (var item in menu) {
+      final reviewRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('reviews')
+          .collection(item);
+
+      await reviewRef.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
+          if (createdAt.isAfter(startDate) &&
+              createdAt.isBefore(DateTime.now())) {
+            totalRating = totalRating + doc.data()?['rating'];
+            counter = counter + 1;
+          }
+        });
+      });
+    }
+  } else {
     final reviewRef = FirebaseFirestore.instance
         .collection('admin')
         .doc('reviews')
-        .collection(item);
+        .collection(selectedFood);
 
     await reviewRef.get().then((querySnapshot) {
       querySnapshot.docs.forEach((doc) {
@@ -170,7 +189,7 @@ Future<double> returnRating(String timeRange) async {
   return double.parse(averageRating.toStringAsFixed(2));
 }
 
-Future<int> returnTotalReview(String timeRange) async {
+Future<int> returnTotalReview(String timeRange, String selectedFood) async {
   int totalReviews = 0;
   List menu = await getMenu();
 
@@ -195,11 +214,28 @@ Future<int> returnTotalReview(String timeRange) async {
     startDate = DateTime.now();
   }
 
-  for (var item in menu) {
+  if (selectedFood == 'Default') {
+    for (var item in menu) {
+      final reviewRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('reviews')
+          .collection(item);
+
+      await reviewRef.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
+          if (createdAt.isAfter(startDate) &&
+              createdAt.isBefore(DateTime.now())) {
+            totalReviews = totalReviews + 1;
+          }
+        });
+      });
+    }
+  } else {
     final reviewRef = FirebaseFirestore.instance
         .collection('admin')
         .doc('reviews')
-        .collection(item);
+        .collection(selectedFood);
 
     await reviewRef.get().then((querySnapshot) {
       querySnapshot.docs.forEach((doc) {
@@ -215,7 +251,7 @@ Future<int> returnTotalReview(String timeRange) async {
   return totalReviews;
 }
 
-Future<double> returnSale(String timeRange) async {
+Future<double> returnSale(String timeRange, String selectedFood) async {
   double totalSale = 0;
 
   int dayGap = 0;
@@ -246,18 +282,38 @@ Future<double> returnSale(String timeRange) async {
     startDate = DateTime.now();
   }
 
-  for (var i = 0; i < dayGap; i++) {
-    final orderRef = FirebaseFirestore.instance
-        .collection('admin')
-        .doc('orders')
-        .collection(DateTime.now().subtract(Duration(days: i)).toString().split(' ')[0]);
+  if (selectedFood == 'Default') {
+    for (var i = 0; i < dayGap; i++) {
+      final orderRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('orders')
+          .collection(
+          DateTime.now().subtract(Duration(days: i)).toString().split(' ')[0]);
 
-    await orderRef.get().then((querySnapshot) {
-      querySnapshot.docs.forEach((doc) {
+      await orderRef.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
           totalSale = totalSale + doc.data()['total'];
-
+        });
       });
-    });
+    }
+  } else {
+    for (var i = 0; i < dayGap; i++) {
+      final orderRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('orders')
+          .collection(
+          DateTime.now().subtract(Duration(days: i)).toString().split(' ')[0]);
+
+      await orderRef.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          for (var item in doc.data()['orderHistory']) {
+            if (item['name'] == selectedFood) {
+              totalSale = totalSale + item['price'];
+            }
+          }
+        });
+      });
+    }
   }
 
   return totalSale;
@@ -517,7 +573,7 @@ Future<String> analyzeComment(String inputText) async {
   return response[0][0]['label'];
 }
 
-Future<Map<String, int>> returnSentiment(String timeRange) async {
+Future<Map<String, int>> returnSentiment(String timeRange, String selectedFood) async {
   Map<String, int> sentimentCount = {
     'positive': 0,
     'negative': 0,
@@ -549,18 +605,52 @@ Future<Map<String, int>> returnSentiment(String timeRange) async {
     startDate = DateTime.now();
   }
 
+  if (selectedFood == "Default") {
+    for (var item in menu) {
+      final reviewRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('reviews')
+          .collection(item);
 
-  for (var item in menu) {
+      final querySnapshot = await reviewRef.get();
+
+      for (var doc in querySnapshot.docs) {
+        DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
+        if (createdAt.isAfter(startDate) &&
+            createdAt.isBefore(DateTime.now())) {
+          positive = doc.data()?['positive'];
+          neutral = doc.data()?['neutral'];
+          negative = doc.data()?['negative'];
+          highest = max(positive, max(neutral, negative));
+          if (highest == positive) {
+            comment = 'positive';
+          } else if (highest == neutral) {
+            comment = 'neutral';
+          } else if (highest == negative) {
+            comment = 'negative';
+          }
+          if (comment == 'positive') {
+            sentimentCount['positive'] = (sentimentCount['positive'] ?? 0) + 1;
+          } else if (comment == 'negative') {
+            sentimentCount['negative'] = (sentimentCount['negative'] ?? 0) + 1;
+          } else if (comment == 'neutral') {
+            sentimentCount['neutral'] = (sentimentCount['neutral'] ?? 0) + 1;
+          }
+        }
+      }
+    }
+  } else {
     final reviewRef = FirebaseFirestore.instance
         .collection('admin')
         .doc('reviews')
-        .collection(item);
+        .collection(selectedFood);
 
     final querySnapshot = await reviewRef.get();
 
     for (var doc in querySnapshot.docs) {
       DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
-      if (createdAt.isAfter(startDate) && createdAt.isBefore(DateTime.now())) {
+      if (createdAt.isAfter(startDate) &&
+          createdAt.isBefore(DateTime.now())) {
         positive = doc.data()?['positive'];
         neutral = doc.data()?['neutral'];
         negative = doc.data()?['negative'];
@@ -586,7 +676,7 @@ Future<Map<String, int>> returnSentiment(String timeRange) async {
   return sentimentCount;
 }
 
-Future<List<Map>> returnWordCloud(String timeRange) async {
+Future<List<Map>> returnWordCloud(String timeRange, String selectedFood) async {
   List<Map> wordCloud = [];
   Map<String, double> tempWordCloud = {};
 
@@ -617,18 +707,41 @@ Future<List<Map>> returnWordCloud(String timeRange) async {
     startDate = DateTime.now();
   }
 
+  if (selectedFood == "Default") {
+    for (var item in menu) {
+      final reviewRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('reviews')
+          .collection(item);
 
-  for (var item in menu) {
+      final querySnapshot = await reviewRef.get();
+
+      for (var doc in querySnapshot.docs) {
+        DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
+        if (createdAt.isAfter(startDate) &&
+            createdAt.isBefore(DateTime.now())) {
+          for (var word in doc.data()?['comment']
+              .toLowerCase()
+              .replaceAll(punctuationRegex, '')
+              .split(' ')
+              .where((word) => word.isNotEmpty && !stopWords.contains(word))) {
+            tempWordCloud[word] = (tempWordCloud[word] ?? 0) + 1;
+          }
+        }
+      }
+    }
+  } else {
     final reviewRef = FirebaseFirestore.instance
         .collection('admin')
         .doc('reviews')
-        .collection(item);
+        .collection(selectedFood);
 
     final querySnapshot = await reviewRef.get();
 
     for (var doc in querySnapshot.docs) {
       DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
-      if (createdAt.isAfter(startDate) && createdAt.isBefore(DateTime.now())) {
+      if (createdAt.isAfter(startDate) &&
+          createdAt.isBefore(DateTime.now())) {
         for (var word in doc.data()?['comment']
             .toLowerCase()
             .replaceAll(punctuationRegex, '')
@@ -636,9 +749,9 @@ Future<List<Map>> returnWordCloud(String timeRange) async {
             .where((word) => word.isNotEmpty && !stopWords.contains(word))) {
           tempWordCloud[word] = (tempWordCloud[word] ?? 0) + 1;
         }
-        }
       }
     }
+  }
 
   for (var key in tempWordCloud.keys) {
     wordCloud.add({'word': key, 'value': tempWordCloud[key]});
@@ -648,7 +761,7 @@ Future<List<Map>> returnWordCloud(String timeRange) async {
   return wordCloud;
 }
 
-Future<int> returnWordCloudCounter(String timeRange) async {
+Future<int> returnWordCloudCounter(String timeRange, String selectedFood) async {
   Map<String, double> tempWordCloud = {};
 
   List menu = await getMenu();
@@ -678,18 +791,42 @@ Future<int> returnWordCloudCounter(String timeRange) async {
     startDate = DateTime.now();
   }
 
+  if (selectedFood == "Default") {
+    for (var item in menu) {
+      final reviewRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('reviews')
+          .collection(item);
 
-  for (var item in menu) {
+      final querySnapshot = await reviewRef.get();
+
+      for (var doc in querySnapshot.docs) {
+        DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
+        if (createdAt.isAfter(startDate) &&
+            createdAt.isBefore(DateTime.now())) {
+          for (var word in doc.data()?['comment']
+              .toLowerCase()
+              .replaceAll(punctuationRegex, '')
+              .split(' ')
+              .where((word) => word.isNotEmpty && !stopWords.contains(word))) {
+            tempWordCloud[word] = (tempWordCloud[word] ?? 0) + 1;
+          }
+          counter++;
+        }
+      }
+    }
+  } else {
     final reviewRef = FirebaseFirestore.instance
         .collection('admin')
         .doc('reviews')
-        .collection(item);
+        .collection(selectedFood);
 
     final querySnapshot = await reviewRef.get();
 
     for (var doc in querySnapshot.docs) {
       DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
-      if (createdAt.isAfter(startDate) && createdAt.isBefore(DateTime.now())) {
+      if (createdAt.isAfter(startDate) &&
+          createdAt.isBefore(DateTime.now())) {
         for (var word in doc.data()?['comment']
             .toLowerCase()
             .replaceAll(punctuationRegex, '')
@@ -706,7 +843,7 @@ Future<int> returnWordCloudCounter(String timeRange) async {
 }
 
 
-Future<List<VBarChartModel>> returnBarData(String timeRange) async {
+Future<List<VBarChartModel>> returnBarData(String timeRange, String selectedFood) async {
   List<VBarChartModel> bardata = [];
   Map<String, double> tempWordCloud = {};
 
@@ -738,18 +875,41 @@ Future<List<VBarChartModel>> returnBarData(String timeRange) async {
     startDate = DateTime.now();
   }
 
+  if (selectedFood == "Default") {
+    for (var item in menu) {
+      final reviewRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('reviews')
+          .collection(item);
 
-  for (var item in menu) {
+      final querySnapshot = await reviewRef.get();
+
+      for (var doc in querySnapshot.docs) {
+        DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
+        if (createdAt.isAfter(startDate) &&
+            createdAt.isBefore(DateTime.now())) {
+          for (var word in doc.data()?['comment']
+              .toLowerCase()
+              .replaceAll(punctuationRegex, '')
+              .split(' ')
+              .where((word) => word.isNotEmpty && !stopWords.contains(word))) {
+            tempWordCloud[word] = (tempWordCloud[word] ?? 0) + 1;
+          }
+        }
+      }
+    }
+  } else {
     final reviewRef = FirebaseFirestore.instance
         .collection('admin')
         .doc('reviews')
-        .collection(item);
+        .collection(selectedFood);
 
     final querySnapshot = await reviewRef.get();
 
     for (var doc in querySnapshot.docs) {
       DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
-      if (createdAt.isAfter(startDate) && createdAt.isBefore(DateTime.now())) {
+      if (createdAt.isAfter(startDate) &&
+          createdAt.isBefore(DateTime.now())) {
         for (var word in doc.data()?['comment']
             .toLowerCase()
             .replaceAll(punctuationRegex, '')
@@ -779,7 +939,7 @@ Future<List<VBarChartModel>> returnBarData(String timeRange) async {
   return bardata;
 }
 
-Future<List<VBarChartModel>> returnMenuRating(String timeRange) async {
+Future<List<VBarChartModel>> returnMenuRating(String timeRange, String selectedFood) async {
   List<VBarChartModel> bardata = [];
   Map<String, double> totalRating = {};
   Map<String, double> totalCounter = {};
@@ -811,27 +971,48 @@ Future<List<VBarChartModel>> returnMenuRating(String timeRange) async {
     startDate = DateTime.now();
   }
 
+  if (selectedFood == "Default") {
+    for (var item in menu) {
+      final reviewRef = FirebaseFirestore.instance
+          .collection('admin')
+          .doc('reviews')
+          .collection(item);
 
-  for (var item in menu) {
+      final querySnapshot = await reviewRef.get();
+
+      for (var doc in querySnapshot.docs) {
+        DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
+        if (createdAt.isAfter(startDate) &&
+            createdAt.isBefore(DateTime.now())) {
+          totalRating[item] = (totalRating[item] ?? 0) + doc.data()?['rating'];
+          totalCounter[item] = (totalCounter[item] ?? 0) + 1;
+        }
+      }
+
+      if (totalCounter[item] != null && totalCounter[item]! > 0) {
+        averageRating[item] = totalRating[item]! / totalCounter[item]!;
+      }
+    }
+  } else {
     final reviewRef = FirebaseFirestore.instance
         .collection('admin')
         .doc('reviews')
-        .collection(item);
+        .collection(selectedFood);
 
     final querySnapshot = await reviewRef.get();
 
     for (var doc in querySnapshot.docs) {
       DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
-      if (createdAt.isAfter(startDate) && createdAt.isBefore(DateTime.now())) {
-        totalRating[item] = (totalRating[item] ?? 0) + doc.data()?['rating'];
-        totalCounter[item] = (totalCounter[item] ?? 0) + 1;
+      if (createdAt.isAfter(startDate) &&
+          createdAt.isBefore(DateTime.now())) {
+        totalRating[selectedFood] = (totalRating[selectedFood] ?? 0) + doc.data()?['rating'];
+        totalCounter[selectedFood] = (totalCounter[selectedFood] ?? 0) + 1;
       }
     }
 
-    if (totalCounter[item] != null && totalCounter[item]! > 0) {
-      averageRating[item] = totalRating[item]! / totalCounter[item]!;
+    if (totalCounter[selectedFood] != null && totalCounter[selectedFood]! > 0) {
+      averageRating[selectedFood] = totalRating[selectedFood]! / totalCounter[selectedFood]!;
     }
-
   }
 
   var sortedEntries = averageRating.entries.toList()

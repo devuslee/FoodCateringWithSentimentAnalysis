@@ -57,6 +57,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
   List categoryItems = [];
   String firstCategory = 'Loading...';
 
+  String selectedFood = 'Default';
+
 
   @override
   void initState() {
@@ -67,16 +69,17 @@ class _AnalysisPageState extends State<AnalysisPage> {
   void fetchData() async {
     try {
       menu = await getMenu();
-      rating = await returnRating(selectedTime);
-      totalReviews = await returnTotalReview(selectedTime);
-      totalSale = await returnSale(selectedTime);
-      overallSentiment = await returnSentiment(selectedTime);
-      wordCloud = await returnWordCloud(selectedTime);
-      bardata = await returnBarData(selectedTime);
-      menuRating = await returnMenuRating(selectedTime);
-      counter = await returnWordCloudCounter(selectedTime);
+      rating = await returnRating(selectedTime, selectedFood);
+      totalReviews = await returnTotalReview(selectedTime, selectedFood);
+      totalSale = await returnSale(selectedTime, selectedFood);
+      overallSentiment = await returnSentiment(selectedTime, selectedFood);
+      wordCloud = await returnWordCloud(selectedTime, selectedFood);
+      bardata = await returnBarData(selectedTime, selectedFood);
+      menuRating = await returnMenuRating(selectedTime, selectedFood);
+      counter = await returnWordCloudCounter(selectedTime, selectedFood);
       categoryItems = await getCategory();
       firstCategory = categoryItems[0];
+
 
       if (mounted) {
         setState(() {
@@ -107,11 +110,32 @@ class _AnalysisPageState extends State<AnalysisPage> {
     return false;
   }
 
-  void updateDropDown() async {
+  void updateCategory() async {
     try {
+      menu = await getMenu();
+      rating = await returnRating(selectedTime, selectedFood);
+      totalReviews = await returnTotalReview(selectedTime, selectedFood);
+      totalSale = await returnSale(selectedTime, selectedFood);
+      overallSentiment = await returnSentiment(selectedTime, selectedFood);
+      wordCloud = await returnWordCloud(selectedTime, selectedFood);
+      bardata = await returnBarData(selectedTime, selectedFood);
+      menuRating = await returnMenuRating(selectedTime, selectedFood);
+      counter = await returnWordCloudCounter(selectedTime, selectedFood);
       categoryItems = await getCategory();
+
+
       if (mounted) {
         setState(() {
+          reviews = reviews;
+          menu = menu;
+          rating = rating;
+          totalSale = totalSale;
+          overallSentiment = overallSentiment;
+          wcdata = WordCloudData(data: wordCloud);
+          wordCloudGreaterThanOne = hasValueGreaterThanOne(wcdata.data);
+          print(wordCloudGreaterThanOne);
+          bardata = bardata;
+          counter= counter;
           categoryItems = categoryItems;
         });
       }
@@ -138,7 +162,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
                   onChanged: (value) {
                     setState(() {
                       selectedTime = value.toString();
-                      fetchData();
+                      updateCategory();
                     });
                   },
                 ),
@@ -150,8 +174,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
                   onChanged: (value) {
                     setState(() {
                       firstCategory = value.toString();
-                      print(firstCategory);
-                      updateDropDown();
+                      selectedFood = firstCategory;
+                      fetchData();
                     });
                   },
                 ),
