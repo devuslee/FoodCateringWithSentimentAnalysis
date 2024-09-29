@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableColor.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/HomePage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/LoginPage.dart';
@@ -10,7 +11,7 @@ void main() async {
   await Firebase.initializeApp(
     options: FirebaseOptions(
       apiKey: 'AIzaSyC2FIvLhjPs91xQxVz15NUtam1RKHRsWIc',
-      appId: '1:831398945187:android:a3290e4a59ea933d9b3a16',
+      appId: '1:831398945187:android:ac435823cd0e94de9b3a16',
       messagingSenderId: '831398945187',
       projectId: 'foodcatering-6bb02',
       storageBucket: 'foodcatering-6bb02.appspot.com',
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
+        scaffoldBackgroundColor: backGroundColor,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),

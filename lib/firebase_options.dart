@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'foodcatering-6bb02.appspot.com',
     iosBundleId: 'com.example.foodcateringwithsentimentanalysis',
   );
+
 }

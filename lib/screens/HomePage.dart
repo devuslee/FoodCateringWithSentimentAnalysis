@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableColor.dart';
 import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableWidgets.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../reusableWidgets/reusableFunctions.dart';
+import 'ConfirmOrderQrScanner.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -112,7 +115,8 @@ class _HomePageState extends State<HomePage> {
                   onPressed: _decrementDate,
                   icon: Icon(
                     Icons.arrow_left,
-                    size: 50,
+                    size: MediaQuery.of(context).size.width * 0.15,
+                    color: selectedButtonColor,
                   ),
                 ),
                 InkWell(
@@ -133,9 +137,10 @@ class _HomePageState extends State<HomePage> {
                   },
                   child: Text(
                     DayMonthYearFormatter(selectedDateTime),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                    style: GoogleFonts.lato(
+                      fontSize: MediaQuery.of(context).size.width * 0.065, // Adjust font size
+                      fontWeight: FontWeight.bold, // Adjust font weight
+                      color: selectedButtonColor, // Adjust text color
                     ),
                   ),
                 ),
@@ -143,7 +148,8 @@ class _HomePageState extends State<HomePage> {
                   onPressed: _incrementDate,
                   icon: Icon(
                     Icons.arrow_right,
-                    size: 50,
+                    size: MediaQuery.of(context).size.width * 0.15,
+                    color: selectedButtonColor,
                   ),
                 ),
               ],
@@ -151,66 +157,85 @@ class _HomePageState extends State<HomePage> {
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             Container(
               width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height * 0.15,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey),
+                color: lightGrey,
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.25,
-                          child: Column(
-                            children: [
-                              Text("Total Orders:", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025),),
-                              Text(totalordersLeft.toString(), style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.1, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.25,
+                        child: Column(
+                          children: [
+                            Text("Total Orders:",
+                              style: GoogleFonts.lato(
+                                fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                                fontWeight: FontWeight.bold, // Adjust font weight
+                                color: selectedButtonColor, // Adjust text color
+                              ),
+                            ),
+                            Text(totalordersLeft.toString(), style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.1, fontWeight: FontWeight.bold)),
+                          ],
                         ),
-                        Container(
-                          width: 1,
-                          height: MediaQuery.of(context).size.height * 0.2,
-                          color: Colors.grey,
+                      ),
+                      Container(
+                        width: 1,
+                        height: MediaQuery.of(context).size.height * 0.145,
+                        color: Colors.grey,
+                      ),
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.25,
+                        child: Column(
+                          children: [
+                            Text("Completed:", style: GoogleFonts.lato(
+                              fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                              fontWeight: FontWeight.bold, // Adjust font weight
+                              color: selectedButtonColor, // Adjust text color
+                            ),),
+                            Text(totalcompletedorders.toString(), style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.1, fontWeight: FontWeight.bold)),
+                          ],
                         ),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.25,
-                          child: Column(
-                            children: [
-                              Text("Completed:", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025),),
-                              Text(totalcompletedorders.toString(), style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.1, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: MediaQuery.of(context).size.height * 0.145,
+                        color: Colors.grey,
+                      ),
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.25,
+                        child: Column(
+                          children: [
+                            Text("Total Meals:",
+                                style: GoogleFonts.lato(
+                              fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                              fontWeight: FontWeight.bold, // Adjust font weight
+                              color: selectedButtonColor, // Adjust text color
+                            ),),
+                            Text(totalmeals.toString(), style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.1, fontWeight: FontWeight.bold)),
+                          ],
                         ),
-                        Container(
-                          width: 1,
-                          height: MediaQuery.of(context).size.height * 0.2,
-                          color: Colors.grey,
-                        ),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.25,
-                          child: Column(
-                            children: [
-                              Text("Total Meals:", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025),),
-                              Text(totalmeals.toString(), style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.1, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-        
-                  ],
-                )
+                      ),
+                    ],
+                  ),
+
+                ],
               ),
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-            Text("Orders Today", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025)),
+            // Text("Orders Today", style: GoogleFonts.lato(
+            //   fontSize: MediaQuery.of(context).size.width * 0.05, // Adjust font size
+            //   fontWeight: FontWeight.bold, // Adjust font weight
+            //   color: selectedButtonColor, // Adjust text color
+            // ),),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+            Container(
+              width : MediaQuery.of(context).size.width * 0.9,
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
@@ -225,12 +250,22 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             if (filteredOrders.isEmpty)
-              Column(
-                children: [
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                  Icon(Icons.hourglass_empty, size: MediaQuery.of(context).size.width * 0.2, color: Colors.grey),
-                  Text("No Orders Found", style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.025, color: Colors.grey)),
-                ],
+              Container(
+                height: MediaQuery.of(context).size.height * 0.3,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                    Icon(Icons.hourglass_empty, size: MediaQuery.of(context).size.width * 0.2, color: selectedButtonColor),
+                    Text("No Orders Found",
+                      style: GoogleFonts.lato(
+                        fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                        fontWeight: FontWeight.bold, // Adjust font weight
+                        color: selectedButtonColor, // Adjust text color
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
             if (filteredOrders.isNotEmpty)
@@ -258,7 +293,7 @@ class _HomePageState extends State<HomePage> {
                     trailing: Container(
                       width: MediaQuery.of(context).size.width * 0.15,
                       child: ElevatedButton(
-                        onPressed: filteredOrders[index]['status'] == 'Completed' ? () {}
+                        onPressed: filteredOrders[index]['status'] == 'Completed and Reviewed' ? () {}
                             : filteredOrders[index]['status'] == 'Completed' ? () {} : () {
                           if (filteredOrders[index]['status'] == "Pending") {
                             updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Ready", selectedDateTime);
@@ -306,6 +341,22 @@ class _HomePageState extends State<HomePage> {
                                   Text("x${filteredOrders[index]['orderHistory'][i]['quantity']}"),
                                 ],
                               ),
+                            if (filteredOrders[index]['status'] == "Ready")
+                            Center(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ConfirmOrderQrScanner(
+                                        orderID: filteredOrders[index]['id']
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Text("Scan Order"),
+                              ),
+                            )
                           ],
                         ),
                       ),

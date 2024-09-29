@@ -22,20 +22,25 @@ class _CommentsPageState extends State<CommentsPage> {
   Map<String, List<Map<String, dynamic>>> allReviews = {};
   List menu = [];
   List reviewMenu = ['Loading...'];
+  List category = [];
   List timeOptions = ['Today', 'Yesterday', 'This Week', 'This Month', 'This Year', 'All Time'];
+
   String selectedTime = 'Today';
+  String selectedCategory = 'Loading...';
+  String trueSelectedCategory = "Default";
 
   @override
   void initState() {
     super.initState();
-    fetchData();
+    // fetchData();
   }
 
   void fetchData() async {
     try {
       reviews = await returnTodayReviews();
-      allReviews = await returnAllReviews(selectedTime);
+      allReviews = await returnAllReviews(selectedTime, trueSelectedCategory);
       menu = await getMenu();
+      category = await getCategory();
 
       if (mounted) {
         setState(() {
@@ -43,6 +48,8 @@ class _CommentsPageState extends State<CommentsPage> {
           reviewMenu = menu;
           allReviews = allReviews;
           menu = menu;
+          category = category;
+          selectedCategory = category[0];
         });
       }
     } catch (error) {
@@ -50,13 +57,21 @@ class _CommentsPageState extends State<CommentsPage> {
     }
   }
 
-  void updateReviews() async {
+  void updateCategories() async {
     try {
-      allReviews = await returnAllReviews(selectedTime);
+      reviews = await returnTodayReviews();
+      allReviews = await returnAllReviews(selectedTime, trueSelectedCategory);
+
+      menu = await getMenu();
+      category = await getCategory();
 
       if (mounted) {
         setState(() {
+          reviews = reviews;
+          reviewMenu = menu;
           allReviews = allReviews;
+          menu = menu;
+          category = category;
         });
       }
     } catch (error) {
@@ -87,7 +102,7 @@ class _CommentsPageState extends State<CommentsPage> {
                         onChanged: (value) {
                           setState(() {
                             selectedTime = value.toString();
-                            updateReviews();
+                            updateCategories();
                           });
                         },
                       ),
@@ -98,11 +113,13 @@ class _CommentsPageState extends State<CommentsPage> {
                       ),
                       child: DropdownButton(
                         padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-                          value: reviewMenu[0],
-                          items: menu.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
+                          value: selectedCategory,
+                          items: category.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
                           onChanged: (value) {
                             setState(() {
-                              reviewMenu = [value];
+                              selectedCategory = value.toString();
+                              trueSelectedCategory = selectedCategory;
+                              updateCategories();
                             });
                           },
                       ),
@@ -127,13 +144,18 @@ class _CommentsPageState extends State<CommentsPage> {
                   ),
 
                 if (allReviews.isNotEmpty)
-                for (var item in reviewMenu)
+                for (var item in menu)
+                  if (allReviews[item]?.isNotEmpty == true)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
                       children: [
-                        Text("$item", style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.025, fontWeight: FontWeight.bold)),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                            Column(
+                              children: [
+                                Text("$item", style: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.025, fontWeight: FontWeight.bold)),
+                                SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                              ],
+                            ),
                         ListView.builder(
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),

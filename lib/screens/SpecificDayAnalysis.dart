@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableWidgets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -14,26 +16,25 @@ import 'package:vertical_barchart/vertical-barchart.dart';
 import 'package:vertical_barchart/vertical-barchartmodel.dart';
 import 'package:vertical_barchart/vertical-legend.dart';
 
-import '../reusableWidgets/reusableColor.dart';
 import '../reusableWidgets/reusableFunctions.dart';
 import 'CommentsPage.dart';
 import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableWidgets.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableColor.dart';
 
 
-HfInference hfInference = HfInference('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');
-
-class AnalysisPage extends StatefulWidget {
-  const AnalysisPage({super.key});
+class SpecificDayAnalysis extends StatefulWidget {
+  const SpecificDayAnalysis({super.key});
 
   @override
-  State<AnalysisPage> createState() => _AnalysisPageState();
+  State<SpecificDayAnalysis> createState() => _SpecificDayAnalysisState();
 }
 
-class _AnalysisPageState extends State<AnalysisPage> {
-  TextEditingController commentController = TextEditingController();
+class _SpecificDayAnalysisState extends State<SpecificDayAnalysis> {
+  String selectedDateTime = DateTime.now().toString().split(" ")[0];
 
   Map<String, List<Map<String, dynamic>>> reviews = {};
   List<dynamic> test1 = [];
@@ -68,13 +69,10 @@ class _AnalysisPageState extends State<AnalysisPage> {
 
   String selectedLineGraphOption = "This Week";
   String selectedScatterPlotOption = "This Week";
-  String selectedTime = 'Today';
+  String selectedTime = DateTime.now().toString().split(" ")[0];
 
 
   List<VBarChartModel> bardata = [];
-  double bardataMax = 0.0;
-  double linegraphMaxY = 0.0;
-
   List<VBarChartModel> menuRating = [];
 
   bool wordCloudGreaterThanOne = false;
@@ -88,11 +86,11 @@ class _AnalysisPageState extends State<AnalysisPage> {
   int negativeSentiment = 0;
   int neutralSentiment = 0;
 
+
   bool sentimentByMenuHasData = false;
   bool loading = true;
+  double bardataMax = 0.0;
 
-
-  @override
   void initState() {
     super.initState();
     fetchData();
@@ -101,131 +99,21 @@ class _AnalysisPageState extends State<AnalysisPage> {
   void fetchData() async {
     try {
       loading = true;
-      while (startDate.weekday != 1) {
-        startDate = startDate.subtract(Duration(days: 1));
-      }
-      menu = await getMenu();
-
-      rating = await returnRating(selectedTime, selectedFood);
-
-      totalReviews = await returnTotalReview(selectedTime, selectedFood);
-
-      totalSale = await returnSale(selectedTime, selectedFood);
-
-      overallSentiment = await returnSentiment(selectedTime, selectedFood);
-
-      wordCloud = await returnWordCloud(selectedTime, selectedFood);
-
-      bardata = await returnWordFrequency(selectedTime, selectedFood);
-      bardataMax = await returnMaxXWordFrequency(selectedTime, selectedFood);
-
-      menuRating = await returnMenuRating(selectedTime, selectedFood);
-
-      sentimentRating = await returnSentimentRating(selectedTime, selectedFood);
-
-      counter = await returnWordCloudCounter(selectedTime, selectedFood);
-
-      categoryItems = await getCategory();
-
-      firstCategory = categoryItems[0];
-
-      linegraphSales = await returnLineGraphSales(selectedLineGraphOption, selectedFood);
-
-      scatterData = await returnScatterData(selectedTime, selectedFood);
-
-      double positive = (overallSentiment['positive'] is num) ? (overallSentiment['positive'] as num).toDouble() : 0.0;
-      double negative = (overallSentiment['negative'] is num) ? (overallSentiment['negative'] as num).toDouble() : 0.0;
-      double neutral = (overallSentiment['neutral'] is num) ? (overallSentiment['neutral'] as num).toDouble() : 0.0;
-
-
-      double total = positive + negative + neutral;
-
-      if (total > 0) {
-        positiveSentiment = ((positive / total) * 100).ceil();
-        negativeSentiment = ((negative / total) * 100).ceil();
-        neutralSentiment = ((neutral / total) * 100).ceil();
-      } else {
-        positiveSentiment = 0;
-        negativeSentiment = 0;
-        neutralSentiment = 0;
-      }
-
-
-
-      while (thisWeek.weekday != 1) {
-        thisWeek = thisWeek.subtract(Duration(days: 1));
-      }
-
-      while (previousWeek.weekday != 1) {
-        previousWeek = previousWeek.subtract(Duration(days: 1));
-      }
-      previousWeek = previousWeek.subtract(Duration(days: 7));
-
-      if (mounted) {
-        setState(() {
-          startDate = startDate;
-          reviews = reviews;
-          menu = menu;
-          rating = rating;
-          totalSale = totalSale;
-          overallSentiment = overallSentiment;
-          wcdata = WordCloudData(data: wordCloud);
-          wordCloudGreaterThanOne = hasValueGreaterThanOne(wcdata.data);
-          bardata = bardata;
-          counter= counter;
-          categoryItems = categoryItems;
-          loading = false;
-        });
-      }
-    } catch (error) {
-      print('Error fetching data: $error');
-    }
-  }
-
-  bool hasValueGreaterThanOne(List<Map<dynamic,dynamic>> data) {
-    for (var item in data) {
-      if (item['value'] > 1) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  void updateCategory() async {
-    try {
-      loading = true;
-      menu = await getMenu();
       menuRating = [];
-      linegraphSales = [];
 
-      rating = await returnRating(selectedTime, selectedFood);
+      menu = await getMenu();
+      rating = await returnSpecificDayRating(selectedTime, selectedFood);
+      totalReviews = await returnSpecificDayTotalReview(selectedTime, selectedFood);
+      totalSale = await returnSpecificDaySale(selectedTime, selectedFood);
+      overallSentiment = await returnSpecificDaySentiment(selectedTime, selectedFood);
+      wordCloud = await returnSpecificDayWordCloud(selectedTime, selectedFood);
+      counter = await returnSpecificDayWordCloudCounter(selectedTime, selectedFood);
+      bardata = await returnSpecificDayWordFrequency(selectedTime, selectedFood);
+      bardataMax = await returnSpecificDayMaxXWordFrequency(selectedTime, selectedFood);
+      menuRating = await returnSpecificDayMenuRating(selectedTime, selectedFood);
 
-      totalReviews = await returnTotalReview(selectedTime, selectedFood);
-
-      totalSale = await returnSale(selectedTime, selectedFood);
-
-      overallSentiment = await returnSentiment(selectedTime, selectedFood);
-
-      wordCloud = await returnWordCloud(selectedTime, selectedFood);
-
-      bardata = await returnWordFrequency(selectedTime, selectedFood);
-
-      bardataMax = await returnMaxXWordFrequency(selectedTime, selectedFood);
-
-      menuRating = await returnMenuRating(selectedTime, selectedFood);
-
-      sentimentRating = await returnSentimentRating(selectedTime, selectedFood);
-
-
-
-      //if theres only 1 word cloud it doesnt work. this is to check if theres more than 1
-      counter = await returnWordCloudCounter(selectedTime, selectedFood);
-      categoryItems = await getCategory();
-
-      scatterData = await returnScatterData(selectedTime, selectedFood);
-      linegraphSales = await returnLineGraphSales(selectedLineGraphOption, selectedFood);
-      linegraphMaxY = await returnMaxYLineGraphSales(selectedLineGraphOption, selectedFood);
-
+      sentimentRating = await returnSpecificDaySentimentRating(selectedTime, selectedFood);
+      scatterData = await returnSpecificDayScatterData(selectedTime, selectedFood);
 
 
       double positive = overallSentiment['positive']?.toDouble() ?? 0;
@@ -244,18 +132,12 @@ class _AnalysisPageState extends State<AnalysisPage> {
         neutralSentiment = 0;
       }
 
+
       if (mounted) {
         setState(() {
-          reviews = reviews;
-          menu = menu;
           rating = rating;
-          totalSale = totalSale;
-          overallSentiment = overallSentiment;
           wcdata = WordCloudData(data: wordCloud);
           wordCloudGreaterThanOne = hasValueGreaterThanOne(wcdata.data);
-          bardata = bardata;
-          counter= counter;
-          categoryItems = categoryItems;
           loading = false;
         });
       }
@@ -264,20 +146,13 @@ class _AnalysisPageState extends State<AnalysisPage> {
     }
   }
 
-  void updateGraph() async {
-    try {
-      linegraphSales = await returnLineGraphSales(selectedLineGraphOption, selectedFood);
-      print(linegraphSales);
-
-      if (mounted) {
-        setState(() {
-          linegraphSales = linegraphSales;
-        });
+  bool hasValueGreaterThanOne(List<Map<dynamic,dynamic>> data) {
+    for (var item in data) {
+      if (item['value'] > 1) {
+        return true;
       }
-
-    } catch (error) {
-      print('Error fetching data: $error');
     }
+    return false;
   }
 
   @override
@@ -286,57 +161,31 @@ class _AnalysisPageState extends State<AnalysisPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ReusableAppBar(title: "Analysis", backButton: false),
+            ReusableAppBar(title: "Analysis by Day", backButton: true),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Spacer(),
-                DropdownButton(
-                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-                  value: selectedTime,
-                  items: timeOptions.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTime = value.toString();
-                      updateCategory();
-                    });
-                  },
-                ),
-                SizedBox(width: MediaQuery.of(context).size.width * 0.01),
-                DropdownButton(
-                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-                  value: firstCategory,
-                  items: categoryItems.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      firstCategory = value.toString();
-                      selectedFood = firstCategory;
-                      updateCategory();
-                    });
-                  },
-                ),
+                Text('${DayMonthYearFormatter(selectedTime)} '),
                 IconButton(
-                    onPressed: () {
-                      selectedFood = "Default";
-                      setState(() {
-                        selectedFood = "Default";
-                        selectedTime = "Today";
-                        updateCategory();
-                      });
+                    onPressed: () async {
+                      DateTime? date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.parse(selectedDateTime),
+                        firstDate: DateTime(2021),
+                        lastDate: DateTime(2025),
+                      );
+
+                      if (date != null) {
+                        selectedTime = date.toString().split(" ")[0];
+                        setState(() {
+                          fetchData();
+                        });
+                      }
+
                     },
-                    icon: Icon(Icons.refresh)
+                    icon: Icon(Icons.calendar_today)
                 ),
-                Spacer(),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SpecificDayAnalysis()),
-                    );
-                  },
-                  child: Text("Comment"),
-                )
               ],
             ),
             Padding(
@@ -1254,157 +1103,6 @@ class _AnalysisPageState extends State<AnalysisPage> {
               ),
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-            if (selectedTime == "This Week")
-              Container(
-                width: MediaQuery.of(context).size.width * 0.94,
-                height: MediaQuery.of(context).size.height * 0.445,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Spacer(),
-                          Spacer(),
-                          Text("Sales by Week",
-                            style: GoogleFonts.lato(
-                              fontSize: MediaQuery.of(context).size.width * 0.05, // Adjust font size
-                              fontWeight: FontWeight.bold, // Adjust font weight
-                              color: selectedButtonColor, // Adjust text color
-                            ),
-                          ),
-                          Spacer(),
-                          Tooltip(
-                            message: "Shows the rating of each day VS the analysed sentiment score",
-                            child: Icon(Icons.info_outline,
-                              color: Colors.grey,
-                              size: MediaQuery.of(context).size.width * 0.05,),
-                          )
-                        ],
-                      ),
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-
-                      if (loading == true)
-                        Column(
-                          children: [
-                            Text("Loading Data..."),
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                            CircularProgressIndicator(),
-                          ],
-                        ),
-
-                      if (linegraphSales.isEmpty && loading == false)
-                        Column(
-                          children: [
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                            Image.asset('assets/nodata.png'),
-                            Text("No data available", style: GoogleFonts.lato(
-                              fontSize: MediaQuery.of(context).size.width * 0.04,
-                              color: Colors.grey,
-                            ),),
-                          ],
-                        ),
-
-                      if (linegraphSales.isNotEmpty && loading == false)
-                        Align(
-                          alignment: Alignment.bottomLeft,
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.8,
-                            height: MediaQuery.of(context).size.height * 0.33,
-                            child: LineChart(
-                              LineChartData(
-                                lineBarsData: [
-                                  LineChartBarData(
-                                    spots: linegraphSales,
-                                    isCurved: false,
-                                    barWidth: 5,
-                                    isStrokeCapRound: true,
-                                    belowBarData: BarAreaData(show: false),
-                                    color: Colors.green,
-                                  ),
-                                ],
-                                maxY: linegraphMaxY,
-                                borderData: FlBorderData(show: true),
-                                gridData: FlGridData(show: true),
-                                titlesData: FlTitlesData(
-                                  leftTitles: AxisTitles(
-                                      axisNameWidget: Row(
-                                        children: [
-                                          Spacer(),
-                                          Spacer(),
-                                          Text('Sales (RM)',
-                                            style: GoogleFonts.lato(
-                                              fontSize: MediaQuery.of(context).size.width * 0.045,
-                                            ),),
-                                          Spacer(),
-                                        ],
-                                      ),
-                                      axisNameSize: MediaQuery.of(context).size.width * 0.075,
-                                      sideTitles: SideTitles(showTitles: true,
-                                        reservedSize: MediaQuery.of(context).size.width * 0.1,
-
-                                      )
-                                  ),
-                                  bottomTitles: AxisTitles(
-                                    axisNameSize: MediaQuery.of(context).size.width * 0.06,
-                                    axisNameWidget: Row(
-                                      children: [
-                                        Spacer(),
-                                        Spacer(),
-                                        Text(
-                                          'Day of the Week',
-                                          style: GoogleFonts.lato(
-                                            fontSize: MediaQuery.of(context).size.width * 0.045,
-                                          ),
-                                        ),
-                                        Spacer(),
-                                      ],
-                                    ),
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      reservedSize: MediaQuery.of(context).size.width * 0.1,
-                                      getTitlesWidget: (value, meta) {
-                                        // Map index to days of the week
-                                        switch (value.toInt()) {
-                                          case 0: return Text('Mon');
-                                          case 1: return Text('Tue');
-                                          case 2: return Text('Wed');
-                                          case 3: return Text('Thu');
-                                          case 4: return Text('Fri');
-                                          case 5: return Text('Sat');
-                                          case 6: return Text('Sun');
-                                          default: return Text('');
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                  topTitles: AxisTitles(
-                                    sideTitles: SideTitles(showTitles: false),
-                                  ),
-                                  rightTitles: AxisTitles(
-                                    sideTitles: SideTitles(showTitles: false),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ),

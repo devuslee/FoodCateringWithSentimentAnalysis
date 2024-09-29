@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableColor.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/AnalysisPage.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/HomePage.dart';
 import 'package:foodcateringwithsentimentanalysis/screens/MenuPage.dart';
+import 'package:foodcateringwithsentimentanalysis/screens/SettingPage.dart';
 import 'package:icon_badge/icon_badge.dart';
 
 
@@ -39,7 +41,7 @@ class _NavigationPageState extends State<NavigationPage> {
       HomePage(),
       AnalysisPage(),
       MenuPage(),
-      Placeholder(),
+      SettingPage(),
     ];
   }
 
@@ -47,7 +49,7 @@ class _NavigationPageState extends State<NavigationPage> {
     Icons.home,
     Icons.redeem,
     Icons.menu,
-    Icons.person,
+    Icons.settings,
   ];
 
 
@@ -56,50 +58,126 @@ class _NavigationPageState extends State<NavigationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[currentPageIndex],
-      bottomNavigationBar: AnimatedBottomNavigationBar.builder(
-        height: 80,
-        itemCount: IconList.length,
-        tabBuilder: (index, isActive) {
-          final color = isActive ? Colors.blue : Colors.grey;
-          return Container(
-            height: 80,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconBadge(
-                      icon: Icon(IconList[index], color: color, size: 30,),
-                      itemCount: 0,
-                      badgeColor: Colors.red,
-                      right: 6,
-                      top: 0,
-                      hideZero: true,
-                      itemColor: Colors.white,
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        index == 0 ? 'Home' : index == 1 ? 'Analysis' : index == 2 ? 'Menu' : index == 3 ? 'Profile' : '',
-                        maxLines: 1,
-                        style: TextStyle(color: color),
-                      ),
-                    ),
-                  ],
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 1,  // Thin line
+            decoration: BoxDecoration(
+              color: Colors.grey[300],  // Light grey color for the line
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,  // Light shadow
+                  blurRadius: 6,  // How much the shadow spreads
+                  offset: Offset(0, -3),  // Position of shadow (above the line)
                 ),
               ],
             ),
-          );
-        },
-        activeIndex: currentPageIndex,
-        gapLocation: GapLocation.none,
-        notchSmoothness: NotchSmoothness.defaultEdge,
-        leftCornerRadius: 32,
-        rightCornerRadius: 32,
-        onTap: (index) => setState(() => currentPageIndex = index),
+          ),
+          BottomAppBar(
+            padding: EdgeInsets.symmetric(horizontal: 0),
+            height: MediaQuery.of(context).size.height * 0.1,
+            color: Colors.white,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.8 / IconList.length,
+                  child: InkWell(
+                    onTap: () => setState(() => currentPageIndex = 0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.home,
+                          color: currentPageIndex == 0 ? selectedButtonColor : notSelectedButtonColor,
+                          size: MediaQuery.of(context).size.height * 0.04,
+                        ),
+                        Text(
+                          "Home",
+                          maxLines: 1,
+                          style: TextStyle(color: currentPageIndex == 0 ? selectedButtonColor : notSelectedButtonColor,
+                            fontSize: MediaQuery.of(context).size.height * 0.02,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8 / IconList.length,
+                  child: InkWell(
+                    onTap: () => setState(() => currentPageIndex = 1),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.redeem,
+                          color: currentPageIndex == 1 ? selectedButtonColor : notSelectedButtonColor,
+                          size: MediaQuery.of(context).size.height * 0.04,
+                        ),
+                        Text(
+                          "Redeem",
+                          maxLines: 1,
+                          style: TextStyle(color: currentPageIndex == 1 ? selectedButtonColor : notSelectedButtonColor,
+                            fontSize: MediaQuery.of(context).size.height * 0.02,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8 / IconList.length,
+                  child: InkWell(
+                    onTap: () => setState(() => currentPageIndex = 2),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add,
+                          color: currentPageIndex == 2 ? selectedButtonColor : notSelectedButtonColor,
+                          size: MediaQuery.of(context).size.height * 0.04,
+                        ),
+                        Text(
+                          "Order",
+                          maxLines: 1,
+                          style: TextStyle(color: currentPageIndex == 2 ? selectedButtonColor : notSelectedButtonColor,
+                            fontSize: MediaQuery.of(context).size.height * 0.02,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8 / IconList.length,
+                  child: InkWell(
+                    onTap: () => setState(() => currentPageIndex = 3),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.history,
+                          color: currentPageIndex == 3 ? selectedButtonColor : notSelectedButtonColor,
+                          size: MediaQuery.of(context).size.height * 0.04,
+                        ),
+                        Text(
+                          "History",
+                          maxLines: 1,
+                          style: TextStyle(color: currentPageIndex == 3 ? selectedButtonColor : notSelectedButtonColor,
+                            fontSize: MediaQuery.of(context).size.height * 0.02,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableColor.dart';
 import 'package:icon_badge/icon_badge.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 
 
 class ReusableAppBar extends StatelessWidget {
@@ -38,9 +39,10 @@ class ReusableAppBar extends StatelessWidget {
               Center(
                 child: Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 24.0, // Adjust font size
+                  style: GoogleFonts.lato(
+                    fontSize: MediaQuery.of(context).size.width * 0.065, // Adjust font size
                     fontWeight: FontWeight.bold, // Adjust font weight
+                    color: selectedButtonColor, // Adjust text color
                   ),
                   textAlign: TextAlign.center, // Ensure text is centered
                 ),
@@ -63,16 +65,6 @@ class ReusableAppBar extends StatelessWidget {
                 ),
             ],
           ),
-          Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey.withOpacity(0.5),
-                    width: 2.0,
-                  ),
-                ),
-              )
-          )
         ],
       ),
     );
