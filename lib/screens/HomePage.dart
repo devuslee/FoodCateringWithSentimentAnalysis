@@ -6,6 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../reusableWidgets/reusableFunctions.dart';
 import 'ConfirmOrderQrScanner.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'OrderSummary.dart';
+
 
 
 class HomePage extends StatefulWidget {
@@ -129,6 +133,7 @@ class _HomePageState extends State<HomePage> {
                     );
 
                     if (date != null) {
+                      selectedDate = date;
                       selectedDateTime = date.toString().split(" ")[0];
                       setState(() {
                         fetchData();
@@ -157,7 +162,6 @@ class _HomePageState extends State<HomePage> {
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             Container(
               width: MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height * 0.15,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey),
                 color: lightGrey,
@@ -223,7 +227,37 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
+                  Divider(
+                    color: Colors.grey,
+                    height: 1,
+                  ),
 
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OrderSummary(
+                            order: orders,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      height: MediaQuery.of(context).size.height * 0.05,
+                      color: Colors.grey[300],
+                      child: Center(
+                        child: Text("View Order Summary",
+                          style: GoogleFonts.lato(
+                            fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                            fontWeight: FontWeight.bold, // Adjust font weight
+                            color: selectedButtonColor, // Adjust text color
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
@@ -248,7 +282,6 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.01),
             if (filteredOrders.isEmpty)
               Container(
                 height: MediaQuery.of(context).size.height * 0.3,
@@ -277,26 +310,37 @@ class _HomePageState extends State<HomePage> {
                 return Container(
                   width: MediaQuery.of(context).size.width * 0.9,
                   decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey),
-                      top: index == 0 ? BorderSide(color: Colors.grey) : BorderSide(color: Colors.white),
-                    ),
+                    // border: Border(
+                    //   bottom: BorderSide(color: Colors.grey),
+                    //   top: index == 0 ? BorderSide(color: Colors.grey) : BorderSide(color: Colors.white),
+                    // ),
                   ),
                   child: ExpansionTile(
                     title: FutureBuilder(
                       future: getUsername(filteredOrders[index]['userID']),
                       builder: (context, snapshot) {
-                        return Text("User: ${snapshot.data}");
+                        return Text("User: ${snapshot.data}",
+                        style: GoogleFonts.lato(
+                          fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                          fontWeight: FontWeight.bold, // Adjust font weight
+                          color: selectedButtonColor, // Adjust text color
+                          ),);
                       },
                     ),
-                    subtitle: Text("Order ID: ${filteredOrders[index]['id']}"),
+                    subtitle: Text("Order ID: ${filteredOrders[index]['id']}",
+                    style: GoogleFonts.lato(
+                      fontSize: MediaQuery.of(context).size.width * 0.03, // Adjust font size
+                      color: Colors.grey, // Adjust text color
+                      ),
+                    ),
                     trailing: Container(
-                      width: MediaQuery.of(context).size.width * 0.15,
+                      width: MediaQuery.of(context).size.width * 0.3,
                       child: ElevatedButton(
                         onPressed: filteredOrders[index]['status'] == 'Completed and Reviewed' ? () {}
                             : filteredOrders[index]['status'] == 'Completed' ? () {} : () {
                           if (filteredOrders[index]['status'] == "Pending") {
                             updateOrderStatus(filteredOrders[index]['id'].toString(), filteredOrders[index]['userID'].toString(), "Ready", selectedDateTime);
+                            sendNotification("Order is Ready", "Your order is ready for pickup", filteredOrders[index]['userID'].toString());
                             setState(() {
                               filteredOrders[index]['status'] = "Ready";
                             });
@@ -308,11 +352,18 @@ class _HomePageState extends State<HomePage> {
                             });
                           }
                         },
-                        child: Text(filteredOrders[index]['status']),
+                        child: Text(filteredOrders[index]['status'] == "Completed and Reviewed" ? "Reviewed" : filteredOrders[index]['status'],
+                          style: GoogleFonts.lato(
+                            fontSize: MediaQuery.of(context).size.width * 0.035, // Adjust font size
+                            fontWeight: FontWeight.bold, // Adjust font weight
+                            color: selectedButtonColor, // Adjust text color
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: filteredOrders[index]['status'] == "Pending"
                               ? Colors.yellow
-                              : Colors.green,
+                              : filteredOrders[index]['status'] == "Ready" ?
+                              Colors.green : Colors.grey[300],
                           side: BorderSide(color: Colors.grey),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(0.0),
@@ -321,42 +372,112 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     children: [
-                      Divider(color: Colors.black),
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.only(
+                          left: 16.0,
+                          right: 16.0,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Pickup Time: ${HourFormatter(filteredOrders[index]['desiredPickupTime'])}"),
-                            Text("Payment Method: ${filteredOrders[index]['paymentMethod']}"),
-                            Text("Total: RM${filteredOrders[index]['total']}"),
-                            if (filteredOrders[index]['specialRemarks'] != "")
-                            Text("Special Remarks: ${filteredOrders[index]['specialRemarks']}"),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Pickup Time: ${HourFormatter(filteredOrders[index]['desiredPickupTime'])}",
+                                    style: GoogleFonts.lato(
+                                      fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                                      color: selectedButtonColor, // Adjust text color
+                                      ),
+                                    ),
+                                    Text("Payment Method: ${filteredOrders[index]['paymentMethod']}",
+                                      style: GoogleFonts.lato(
+                                        fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                                        color: selectedButtonColor, // Adjust text color
+                                      ),
+                                    ),
+                                    Text("Total: RM${filteredOrders[index]['total']}",
+                                      style: GoogleFonts.lato(
+                                        fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                                        color: selectedButtonColor, // Adjust text color
+                                      ),
+                                    ),
+                                    if (filteredOrders[index]['specialRemarks'] != "")
+                                      Text("Special Remarks: ${filteredOrders[index]['specialRemarks']}",
+                                        style: GoogleFonts.lato(
+                                          fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                                          color: selectedButtonColor, // Adjust text color
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                if (filteredOrders[index]['status'] == "Ready")
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        onPressed: () async {
+                                          bool isRefresh = await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ConfirmOrderQrScanner(
+                                                orderID: filteredOrders[index]['id'],
+                                                desiredPickupTime: filteredOrders[index]['desiredPickupTime'],
+                                              ),
+                                            ),
+                                          );
+
+                                          if (isRefresh) {
+                                            setState(() {
+                                              fetchData();
+                                            });
+                                          }
+                                        },
+                                        icon: Icon(Icons.qr_code,
+                                        size: MediaQuery.of(context).size.width * 0.1,
+                                      ),
+                                      ),
+                                      Text("Scan QR Code",
+                                        style: GoogleFonts.lato(
+                                          fontSize: MediaQuery.of(context).size.width * 0.03, // Adjust font size
+                                          color: Colors.grey, // Adjust text color
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
                             Divider(),
+                            Center(
+                              child: Text("Order",
+                              style: GoogleFonts.lato(
+                                fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                                fontWeight: FontWeight.bold, // Adjust font weight
+                                color: selectedButtonColor, // Adjust text color
+                                ),
+                              ),
+                            ),
                             for (var i = 0; i < filteredOrders[index]['orderHistory'].length; i++)
                               Row(
                                 children: [
-                                  Text("${filteredOrders[index]['orderHistory'][i]['name']}"),
+                                  Text("${filteredOrders[index]['orderHistory'][i]['name']}",
+                                  style: GoogleFonts.lato(
+                                    fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                                    color: selectedButtonColor, // Adjust text color
+                                    ),
+                                  ),
                                   Spacer(),
-                                  Text("x${filteredOrders[index]['orderHistory'][i]['quantity']}"),
+                                  Text("${filteredOrders[index]['orderHistory'][i]['quantity']}",
+                                  style: GoogleFonts.lato(
+                                    fontSize: MediaQuery.of(context).size.width * 0.04, // Adjust font size
+                                    color: selectedButtonColor, // Adjust text color
+                                    ),
+                                  ),
                                 ],
                               ),
-                            if (filteredOrders[index]['status'] == "Ready")
-                            Center(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ConfirmOrderQrScanner(
-                                        orderID: filteredOrders[index]['id']
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Text("Scan Order"),
-                              ),
-                            )
+                            SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                           ],
                         ),
                       ),

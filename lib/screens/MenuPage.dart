@@ -3,7 +3,9 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableFunctions.dart';
 import 'package:foodcateringwithsentimentanalysis/reusableWidgets/reusableWidgets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../reusableWidgets/reusableColor.dart';
 import 'AddMenuPage.dart';
 import 'EditMenuPage.dart';
 
@@ -20,6 +22,10 @@ class _MenuPageState extends State<MenuPage> {
   String firstCategory = 'Loading...';
 
   Map<String, dynamic> menu = {};
+  Map<String, dynamic> tempmenu = {};
+
+  bool loading = false;
+  TextEditingController searchController = TextEditingController();
 
 
   void initState() {
@@ -29,14 +35,18 @@ class _MenuPageState extends State<MenuPage> {
 
   void fetchData() async {
     try {
+      loading = true;
       categoryItems = await getCategory();
       firstCategory = categoryItems[0];
       menu = await getMenuCategory(firstCategory);
+      tempmenu = await getMenuCategory(firstCategory);
 
       if (mounted) {
         setState(() {
           categoryItems = categoryItems;
           menu = menu;
+
+          loading = false;
         });
       }
     } catch (error) {
@@ -48,6 +58,7 @@ class _MenuPageState extends State<MenuPage> {
     try {
       categoryItems = await getCategory();
       menu = await getMenuCategory(firstCategory);
+      tempmenu = await getMenuCategory(firstCategory);
 
       if (mounted) {
         setState(() {
@@ -59,75 +70,147 @@ class _MenuPageState extends State<MenuPage> {
       print('Error fetching data: $error');
     }
   }
+
+  Future<void> filterOrders(String query) async {
+    Map<String, dynamic> filteredMenu = {};
+
+    if (query.isEmpty) {
+      filteredMenu = tempmenu;
+    } else {
+      menu.forEach((key, value) {
+        if (key.toLowerCase().contains(query.toLowerCase())) {
+          filteredMenu[key] = value;
+        }
+      });
+    }
+
+    if (mounted) {
+      setState(() {
+        menu = filteredMenu;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: selectedButtonColor,
+        onPressed: () async {
+          bool isRefresh = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddMenuPage(),
+            ),
+          );
+
+          if (isRefresh == true) {
+            setState(() {
+              fetchData();
+            });
+          }
+        },
+        child: Icon(Icons.add,
+        color: Colors.white),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             ReusableAppBar(title: "Menu", backButton: false),
             SizedBox(height: MediaQuery.of(context).size.width * 0.01),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            Container(
+              width: MediaQuery.of(context).size.width * 0.95,
+              child: Stack(
+                alignment: Alignment.centerRight,
                 children: [
-                  Spacer(),
-                  DropdownButton(
-                    padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-                    value: firstCategory,
-                    items: categoryItems.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      labelText: "Search by Menu",
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.only(right: 48), // Ensures the text doesn't overlap the button
+                    ),
                     onChanged: (value) {
                       setState(() {
-                        firstCategory = value.toString();
-                        updateDropDown();
+                        filterOrders(value);
                       });
                     },
                   ),
-                  IconButton(
-                      onPressed: () {
-                        updateDropDown();
+                  Positioned(
+                    right: 0,
+                    child: PopupMenuButton(
+                      icon: Icon(Icons.filter_list),  // The filter icon
+                      onSelected: (value) {
+                        setState(() {
+                          firstCategory = value.toString();
+                          updateDropDown();  // Handle the dropdown update
+                        });
                       },
-                      icon: Icon(Icons.refresh)
-                  ),
-                  Spacer(),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      onPressed: () async {
-                        bool isRefresh = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddMenuPage(),
-                          ),
+                      itemBuilder: (context) => categoryItems.map((e) {
+                        return PopupMenuItem(
+                          value: e,
+                          child: Text(e),
                         );
+                      }).toList(),
+                    ),
+                  ),
 
-                        if (isRefresh == true) {
-                          setState(() {
-                            fetchData();
-                          });
-                        }
-                      },
-                      icon: Icon(Icons.add),
-                      color: Colors.green,
-                    )
-                  )
                 ],
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).size.width * 0.01),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(
+                  "Showing all menu for $firstCategory...",
+                  style: GoogleFonts.lato(
+                    fontSize: MediaQuery.of(context).size.width * 0.04,
+                    color: Colors.grey,
+                  ),
+                ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
+
+                  if (loading)
+                    Column(
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                        CircularProgressIndicator(),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                        Text("Loading...", style: GoogleFonts.lato(
+                          fontSize: MediaQuery.of(context).size.height * 0.02,
+                          color: Colors.grey,
+
+                        )),
+                      ],
+                    ),
+
+                  if (menu.isEmpty && !loading)
+                    Center(
+                      child: Text(
+                        "No menu available",
+                        style: GoogleFonts.lato(
+                          fontSize: MediaQuery.of(context).size.width * 0.06,
+                          fontWeight: FontWeight.bold,
+                        )
+                      ),
+                    ),
+
+                  if (menu.isNotEmpty && !loading)
                   for (var item in menu.entries)
                     Column(
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black),
+                            color: lightGrey,
+                            border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -141,8 +224,8 @@ class _MenuPageState extends State<MenuPage> {
                                       return CachedNetworkImage(
                                         imageUrl: snapshot.data.toString(),
                                         imageBuilder: (context, imageProvider) => Container(
-                                          width: MediaQuery.of(context).size.width * 0.2,
-                                          height: MediaQuery.of(context).size.width * 0.2,
+                                          width: MediaQuery.of(context).size.width * 0.3,
+                                          height: MediaQuery.of(context).size.width * 0.3,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.only(
                                               topLeft: Radius.circular(10),
@@ -162,81 +245,118 @@ class _MenuPageState extends State<MenuPage> {
                                 ],
                               ),
                               Padding(
-                                padding: const EdgeInsets.all(8.0),
+                                padding: const EdgeInsets.only(
+                                    left: 8.0,
+                                    right: 8.0,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children:[
                                     Container(
-                                      width: MediaQuery.of(context).size.width * 0.75,
+                                      width: MediaQuery.of(context).size.width * 0.611,
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             item.key,
-                                            style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.03, fontWeight: FontWeight.bold
+                                            style: GoogleFonts.lato(
+                                              fontSize: MediaQuery.of(context).size.width * 0.06,
+                                              fontWeight: FontWeight.bold,
                                             )
                                           ),
                                           Spacer(),
-                                          IconButton(
-                                              onPressed: () async {
-                                                bool isRefresh = await Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => EditMenuPage(menuItem: item),
-                                                  ),
-                                                );
+                                          Container(
+                                            width: MediaQuery.of(context).size.width * 0.1,
+                                            height: MediaQuery.of(context).size.width * 0.1,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: IconButton(
+                                                onPressed: () async {
+                                                  bool isRefresh = await Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => EditMenuPage(menuItem: item),
+                                                    ),
+                                                  );
 
-                                                if (isRefresh == true) {
-                                                  setState(() {
-                                                    fetchData();
-                                                  });
-                                                }
-                                              },
-                                              icon: Icon(Icons.edit),
+                                                  if (isRefresh == true) {
+                                                    setState(() {
+                                                      fetchData();
+                                                    });
+                                                  }
+                                                },
+                                                icon: Icon(Icons.edit,),
+                                                iconSize: MediaQuery.of(context).size.width * 0.05,
+                                            ),
                                           ),
-                                          IconButton(
-                                            onPressed: () async {
-                                              showDialog(
-                                                  context: context,
-                                                  builder: (context) => AlertDialog(
-                                                    title: Text("Delete Menu"),
-                                                    content: Text("Are you sure you want to delete this menu?"),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(context);
-                                                        },
-                                                        child: Text("Cancel"),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(context);
-                                                          deleteMenu(item.value['imageURL']);
-                                                          setState(() {
-                                                            updateDropDown();
-                                                          });
-                                                        },
-                                                        child: Text("Delete",
-                                                          style: TextStyle(
-                                                            color: Colors.red,
+                                          Container(
+                                            width: MediaQuery.of(context).size.width * 0.1,
+                                            height: MediaQuery.of(context).size.width * 0.1,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: IconButton(
+                                              onPressed: () async {
+                                                showDialog(
+                                                    context: context,
+                                                    builder: (context) => AlertDialog(
+                                                      title: Text("Delete Menu"),
+                                                      content: Text("Are you sure you want to delete this menu?"),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.pop(context);
+                                                          },
+                                                          child: Text("Cancel"),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.pop(context);
+                                                            deleteMenu(item.value['imageURL']);
+                                                            setState(() {
+                                                              updateDropDown();
+                                                            });
+                                                          },
+                                                          child: Text("Delete",
+                                                            style: TextStyle(
+                                                              color: Colors.red,
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                              );
-                                            },
-                                            icon: Icon(Icons.delete),
-                                            color: Colors.red,
+                                                      ],
+                                                    ),
+                                                );
+                                              },
+                                              icon: Icon(Icons.delete,),
+                                              color: Colors.red,
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
                                     Text(
                                         "RM ${item.value['price'].toString()}",
-                                      style: TextStyle(
-                                        fontSize: MediaQuery.of(context).size.width * 0.015,
+                                      style: GoogleFonts.lato(
+                                        fontSize: MediaQuery.of(context).size.width * 0.035,
                                         color: Colors.green,
+                                      )
+                                    ),
+                                    IgnorePointer(
+                                      ignoring: true,
+                                      child: RatingBar.builder(
+                                        itemSize: MediaQuery.of(context).size.width * 0.04,
+                                        initialRating: (item.value['rating'] as num).toDouble(),
+                                        minRating: 1,
+                                        direction: Axis.horizontal,
+                                        allowHalfRating: true,
+                                        itemCount: 5,
+                                        itemBuilder: (context, _) => Icon(
+                                          Icons.star,
+                                          color: Colors.amber,
+                                        ),
+                                        onRatingUpdate: (rating) {
+                                          print(rating);
+                                        },
                                       ),
                                     ),
                                     Row(
@@ -244,44 +364,27 @@ class _MenuPageState extends State<MenuPage> {
                                         Text(
                                             "${(item.value['rating']).toStringAsFixed(2)}",
                                             style: TextStyle(
-                                                fontSize: MediaQuery.of(context).size.width * 0.02,
-                                                color: Colors.amber)
+                                                fontSize: MediaQuery.of(context).size.width * 0.035,
+                                                color: Colors.amber[700])
                                         ),
-                                        IgnorePointer(
-                                          ignoring: true,
-                                          child: RatingBar.builder(
-                                            itemSize: MediaQuery.of(context).size.width * 0.0225,
-                                            initialRating: (item.value['rating'] as num).toDouble(),
-                                            minRating: 1,
-                                            direction: Axis.horizontal,
-                                            allowHalfRating: true,
-                                            itemCount: 5,
-                                            itemBuilder: (context, _) => Icon(
-                                              Icons.star,
-                                              color: Colors.amber,
-                                            ),
-                                            onRatingUpdate: (rating) {
-                                              print(rating);
-                                            },
-                                          ),
-                                        ),
+                                        SizedBox(width: MediaQuery.of(context).size.width * 0.005),
                                         Text(
                                             "(${(item.value['totalUsersRating'])})",
                                             style: TextStyle(
-                                                fontSize: MediaQuery.of(context).size.width * 0.02,
+                                                fontSize: MediaQuery.of(context).size.width * 0.035,
                                                 color: Colors.grey)
                                         ),
                                       ],
                                     ),
                                     Container(
-                                      width: MediaQuery.of(context).size.width * 0.75,
+                                      width: MediaQuery.of(context).size.width * 0.6,
                                       child: Text(
                                         wordLimit(item.value['description'], 50),
                                         style: TextStyle(
                                           fontSize: MediaQuery.of(context).size.height * 0.02,
                                         ),
-                                        maxLines: null,
-                                        overflow: TextOverflow.visible,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,  // Use ellipsis for overflow
                                         softWrap: true,
                                       ),
                                     ),
@@ -291,7 +394,7 @@ class _MenuPageState extends State<MenuPage> {
                             ],
                           )
                         ),
-                        SizedBox(height: MediaQuery.of(context).size.width * 0.01),
+                        SizedBox(height: MediaQuery.of(context).size.width * 0.02),
                       ],
                     )
                 ],

@@ -80,7 +80,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
   bool wordCloudGreaterThanOne = false;
 
   List categoryItems = [];
-  String firstCategory = 'Loading...';
+  String firstCategory = 'Default';
 
   String selectedFood = 'Default';
 
@@ -105,6 +105,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
         startDate = startDate.subtract(Duration(days: 1));
       }
       menu = await getMenu();
+      categoryItems = await getCategory();
+      categoryItems.insert(0, "Default");
 
       rating = await returnRating(selectedTime, selectedFood);
 
@@ -124,8 +126,7 @@ class _AnalysisPageState extends State<AnalysisPage> {
       sentimentRating = await returnSentimentRating(selectedTime, selectedFood);
 
       counter = await returnWordCloudCounter(selectedTime, selectedFood);
-
-      categoryItems = await getCategory();
+      
 
       firstCategory = categoryItems[0];
 
@@ -195,6 +196,9 @@ class _AnalysisPageState extends State<AnalysisPage> {
     try {
       loading = true;
       menu = await getMenu();
+      categoryItems = await getCategory();
+      categoryItems.insert(0, "Default");
+      firstCategory = categoryItems[0];
       menuRating = [];
       linegraphSales = [];
 
@@ -220,7 +224,6 @@ class _AnalysisPageState extends State<AnalysisPage> {
 
       //if theres only 1 word cloud it doesnt work. this is to check if theres more than 1
       counter = await returnWordCloudCounter(selectedTime, selectedFood);
-      categoryItems = await getCategory();
 
       scatterData = await returnScatterData(selectedTime, selectedFood);
       linegraphSales = await returnLineGraphSales(selectedLineGraphOption, selectedFood);
@@ -288,56 +291,59 @@ class _AnalysisPageState extends State<AnalysisPage> {
           children: [
             ReusableAppBar(title: "Analysis", backButton: false),
             SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Spacer(),
-                DropdownButton(
-                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-                  value: selectedTime,
-                  items: timeOptions.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTime = value.toString();
-                      updateCategory();
-                    });
-                  },
-                ),
-                SizedBox(width: MediaQuery.of(context).size.width * 0.01),
-                DropdownButton(
-                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-                  value: firstCategory,
-                  items: categoryItems.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      firstCategory = value.toString();
-                      selectedFood = firstCategory;
-                      updateCategory();
-                    });
-                  },
-                ),
-                IconButton(
-                    onPressed: () {
-                      selectedFood = "Default";
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Spacer(),
+                  DropdownButton(
+                    padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
+                    value: selectedTime,
+                    items: timeOptions.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
+                    onChanged: (value) {
                       setState(() {
-                        selectedFood = "Default";
-                        selectedTime = "Today";
+                        selectedTime = value.toString();
                         updateCategory();
                       });
                     },
-                    icon: Icon(Icons.refresh)
-                ),
-                Spacer(),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SpecificDayAnalysis()),
-                    );
-                  },
-                  child: Text("Comment"),
-                )
-              ],
+                  ),
+                  SizedBox(width: MediaQuery.of(context).size.width * 0.01),
+                  DropdownButton(
+                    padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
+                    value: firstCategory,
+                    items: categoryItems.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        firstCategory = value.toString();
+                        selectedFood = firstCategory;
+                        updateCategory();
+                      });
+                    },
+                  ),
+                  Spacer(),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SpecificDayAnalysis()),
+                      );
+                    },
+                    child: Text("Daily Analysis",
+                      style: GoogleFonts.lato(
+                        color: selectedButtonColor,
+                        fontSize: MediaQuery.of(context).size.width * 0.04,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: lightGrey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  )
+                ],
+              ),
             ),
             Padding(
               padding: EdgeInsets.only(
@@ -563,6 +569,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
                                   ),
                                   Spacer(),
                                   Tooltip(
+                                    margin: EdgeInsets.only(
+                                        left:50,),
                                     message: "Automatically analyses comments and gives a sentiment score \n"
                                         "Positive: ${positiveSentiment}% \n"
                                         "Negative: ${negativeSentiment}% \n"

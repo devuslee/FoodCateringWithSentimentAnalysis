@@ -30,28 +30,31 @@ class _SettingPageState extends State<SettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            ReusableAppBar(title: "Settings", backButton: false),
-            SizedBox(height: MediaQuery.of(context).size.width * 0.01),
-            ReuseableSettingContainer(
-              title: "Top Up",
-              icon: Icons.attach_money,
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => QrCodeScanner())
-                );
-              },
-            ),
-            ReuseableSettingContainer(
-              title: "Log Out",
-              icon: Icons.attach_money,
-              onTap: () {
-                logout(context);
-              },
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              ReusableAppBar(title: "Settings", backButton: false),
+              SizedBox(height: MediaQuery.of(context).size.width * 0.01),
+              ReuseableSettingContainer(
+                title: "Top Up",
+                icon: Icons.attach_money,
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => QrCodeScanner())
+                  );
+                },
+              ),
+              ReuseableSettingContainer(
+                title: "Log Out",
+                icon: Icons.logout,
+                onTap: () {
+                  logout(context);
+                },
+              ),
+            ],
+          ),
         ),
       )
     );

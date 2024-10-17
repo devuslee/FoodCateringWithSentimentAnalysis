@@ -113,12 +113,12 @@ class _NavigationPageState extends State<NavigationPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.redeem,
+                          Icons.analytics_outlined,
                           color: currentPageIndex == 1 ? selectedButtonColor : notSelectedButtonColor,
                           size: MediaQuery.of(context).size.height * 0.04,
                         ),
                         Text(
-                          "Redeem",
+                          "Analysis",
                           maxLines: 1,
                           style: TextStyle(color: currentPageIndex == 1 ? selectedButtonColor : notSelectedButtonColor,
                             fontSize: MediaQuery.of(context).size.height * 0.02,
@@ -136,12 +136,12 @@ class _NavigationPageState extends State<NavigationPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.add,
+                          Icons.menu,
                           color: currentPageIndex == 2 ? selectedButtonColor : notSelectedButtonColor,
                           size: MediaQuery.of(context).size.height * 0.04,
                         ),
                         Text(
-                          "Order",
+                          "Menu",
                           maxLines: 1,
                           style: TextStyle(color: currentPageIndex == 2 ? selectedButtonColor : notSelectedButtonColor,
                             fontSize: MediaQuery.of(context).size.height * 0.02,
@@ -159,12 +159,12 @@ class _NavigationPageState extends State<NavigationPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.history,
+                          Icons.settings,
                           color: currentPageIndex == 3 ? selectedButtonColor : notSelectedButtonColor,
                           size: MediaQuery.of(context).size.height * 0.04,
                         ),
                         Text(
-                          "History",
+                          "Settings",
                           maxLines: 1,
                           style: TextStyle(color: currentPageIndex == 3 ? selectedButtonColor : notSelectedButtonColor,
                             fontSize: MediaQuery.of(context).size.height * 0.02,

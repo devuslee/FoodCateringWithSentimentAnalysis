@@ -8,10 +8,12 @@ import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 class ConfirmOrderQrScanner extends StatefulWidget {
   final int orderID;
+  final String desiredPickupTime;
 
   const ConfirmOrderQrScanner({
     Key? key,
-    required this.orderID
+    required this.orderID,
+    required this.desiredPickupTime,
   }) : super(key: key);
 
   @override
@@ -29,6 +31,7 @@ class _ConfirmOrderQrScannerState extends State<ConfirmOrderQrScanner> {
   void initState() {
     super.initState();
     counter = 0;
+    print("desiredpickuptime ${widget.desiredPickupTime}");
   }
 
   void _onQRViewCreated(QRViewController controller) {
@@ -74,9 +77,10 @@ class _ConfirmOrderQrScannerState extends State<ConfirmOrderQrScanner> {
             ),
             TextButton(
               onPressed: () {
+                updateAdminHistoryStatus(widget.desiredPickupTime, widget.orderID);
                 updateQrCodeStatus(uniqueID);
                 Navigator.of(context).pop();
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(true);
               },
               child: Text("Confirm"),
             ),

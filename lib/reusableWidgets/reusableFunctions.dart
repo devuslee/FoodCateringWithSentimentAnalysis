@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
@@ -8,7 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:huggingface_dart/huggingface_dart.dart';
 import 'package:intl/intl.dart';
 import 'package:vertical_barchart/vertical-barchartmodel.dart';
-
+import 'package:http/http.dart' as http;
 import '../screens/AnalysisPage.dart';
 import '../screens/LoginPage.dart';
 
@@ -74,7 +75,6 @@ Future<Map<String, List<Map<String, dynamic>>>> returnTodayReviews() async {
 Future<Map<String, List<Map<String, dynamic>>>> returnAllReviews(String timeRange, String selectedCategory) async {
   Map<String, List<Map<String, dynamic>>> reviewsByMenu = {};
   List menu = await getMenu();
-  print(menu);
 
   DateTime startDate;
 
@@ -98,7 +98,7 @@ Future<Map<String, List<Map<String, dynamic>>>> returnAllReviews(String timeRang
   }
 
 
-  if (selectedCategory == "Default") {
+  if (selectedCategory == "All") {
     for (var item in menu) {
       final reviewRef = FirebaseFirestore.instance
           .collection('admin')
@@ -107,12 +107,16 @@ Future<Map<String, List<Map<String, dynamic>>>> returnAllReviews(String timeRang
 
       await reviewRef.get().then((querySnapshot) {
         querySnapshot.docs.forEach((doc) {
-          DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
-          if (createdAt.isAfter(startDate) && createdAt.isBefore(DateTime.now())) {
-            if (!reviewsByMenu.containsKey(item)) {
-              reviewsByMenu[item] = [];
+          if (doc.data()?['createdAt'] != null) {
+            DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
+            if (createdAt.isAfter(startDate) && createdAt.isBefore(DateTime.now())) {
+              if (!reviewsByMenu.containsKey(item)) {
+                reviewsByMenu[item] = [];
+              }
+              reviewsByMenu[item]?.add(doc.data());
             }
-            reviewsByMenu[item]?.add(doc.data());
+          } else {
+            print("Null createdAt for document: ${doc.id}");
           }
         });
       });
@@ -1350,6 +1354,7 @@ Future<Map<String, double>> returnSpecificDaySentiment(String specificDay, Strin
     'neutral': 0,
   };
   List menu = await getMenu();
+  print("this is the menu ${menu}");
   double positive = 0;
   double negative = 0;
   double neutral = 0;
@@ -2589,6 +2594,19 @@ void updateQrCodeStatus(String uniqueID) {
   });
 }
 
+void updateAdminHistoryStatus(String desiredPickupTime, int orderID) {
+  final adminHistoryRef = FirebaseFirestore.instance
+      .collection('admin')
+      .doc('orders')
+      .collection(desiredPickupTime.split(' ')[0]).doc(orderID.toString());
+
+  adminHistoryRef.update({
+    'status': 'Completed',
+    'completedAt': DateTime.now().toString(),
+  });
+
+}
+
 Future<String> returnUsernameWithUniqueID(String uniqueID) async {
   String username = "";
 
@@ -2619,12 +2637,65 @@ Future<String> returnAmountWithUniqueID(String uniqueID) async {
 
 Future<void> logout(BuildContext context) async {
   await FirebaseAuth.instance.signOut();
-  final userRef = FirebaseFirestore.instance.collection('users').doc(currentUser);
-  userRef.update({'fcmToken': ""});
 
   Navigator.pushAndRemoveUntil(
     context,
     MaterialPageRoute(builder: (context) => LoginPage()),
         (route) => false,
   );
+}
+
+Future<void> sendNotification(String title, String body, String userID) async {
+  String fcmToken = await returnFcmToken(userID);
+
+
+  final url = 'https://fcm.googleapis.com/v1/projects/foodcatering-6bb02/messages:send';
+  final accessToken = "ya29.c.c0ASRK0GaC0Ac9SLxN7jqovEcnZMrUwJNeKVkQrKkZS6BPhn4FbBMJqU5ABswdQDVQIP7cRa5NWnff0yE_6vs7EKqeYIDEMEW1AijtSnE0VA67gvU6EZKcUQ2tC3q4Di9pm9fyKLyW7Zb-cY3DQIn3DEBi98t7P7b3rgYf3fXgUrX90ugP9sVAYswsRN-d9ep3uTb11Qs1EqIFioR28N-8fbVfO9UabUmClFB7kKfloEZ-IWA-1TX2W6qRATqElDcD5c5emqrFK70fD3L6uI130IYnOpCbmbuR0m8_CXNg5HzOxjpRKGY0EcEUin53qwgmsLkCu-HEEBSnayRrJRFrZqEiz5OkxKX0gL8rxiWAl7vX8Hti2UL48NkN384Aex7Zr0Watro6YMldzIUitcRtrQJakYVQ12dId3-t6xc1mF894v0SnUpu1OcmZSwauu1q5aOc7FMkSYwo4S0ixfs_ZWk7mRirJ1RQk4kiJwmqIhSlRwcV-b_VSV0Ub63BWrkrnZwFzbdq5n_h7_oQWjdZ_Rmg0Myj0mrUMRkV0tUgtt4mU1VzY9-Ss9tnhRatJoIM71bMgOzuYQQ2uB2utl12yuwmWO3Y5w8tgW2oum0aYf_pynOqghefmBoX_IcxYJvQeFufg8zwxt45X2rQseBdcQwYmQrgUq3erdrF1WJZSt5XYS-u7tl2tgX3ufR7kY5QZJpoy9eWQ0i8BWUxykRaebkOhzjugM2auMXlzhJn7m6ggyuojOM-U4eQbgcfmZstjd3z7jiu55ejRkkmMV8xM3YorsF3Vevgyab_hqbg7_B-InOjwnvxJjIISYXfV5cxgd8g8udhb-c_606sSkSe-zcriVnodc_t10-b2Uotmb5O5BgYtwVju1xxv9Y84Bg5bQsWOvRcBlIa0W5iVvk1bxdjjw0owgFsr-Ze9Jud1xxc4xBos82VkBqhn5lv42-sxp_-1Xb680k-irS8mlygz8qo20o0jQelnbv3gzh5b50iUoUhOJ5j6Zk";
+
+  final headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $accessToken', // Use OAuth 2.0 token
+  };
+
+  final payload = {
+    'message': {
+      'token': "${fcmToken}",
+      'notification': {
+        'title': title,
+        'body': body,
+      },
+      'android': {
+        'notification': {
+          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+        },
+      },
+      'data' : {
+        'payload' : 'orderReady',
+      }
+    },
+  };
+
+  final response = await http.post(
+    Uri.parse(url),
+    headers: headers,
+    body: json.encode(payload),
+  );
+
+  if (response.statusCode == 200) {
+    print('Notification sent successfully.');
+  } else {
+    print('Failed to send notification: ${response.body}');
+  }
+}
+
+Future<String> returnFcmToken(String userID) async {
+  final userRef = FirebaseFirestore.instance.collection('users').doc(userID);
+  String fcmToken = "";
+
+  await userRef.get().then((doc) {
+    fcmToken = doc.data()?['fcmToken'];
+  });
+
+
+  return fcmToken;
 }
