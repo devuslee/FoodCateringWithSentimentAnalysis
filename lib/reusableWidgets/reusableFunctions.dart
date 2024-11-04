@@ -870,28 +870,33 @@ Future<List<ScatterSpot>> returnSpecificDayScatterData(String specificDay, Strin
 
       await orderRef.get().then((querySnapshot) {
         querySnapshot.docs.forEach((doc) {
+          double positive = (doc.data()['positive'] as num).toDouble();
+          double neutral = (doc.data()['neutral'] as num).toDouble();
+          double negative = (doc.data()['negative'] as num).toDouble();
+
+          overallSentimentScore = (positive * 1) + (neutral * 0.6) + (negative * 0.2);
           String? createdAt = doc.data()?['createdAt'].toString().split(' ')[0];
           if (createdAt == specificDay) {
             overallSentimentScore =
                 (doc.data()['positive'] * 1) + doc.data()['neutral'] * 0.6 +
                     doc.data()['negative'] * 0.2;
-            rating = doc.data()['rating'];
+            rating = (doc.data()['rating'] as num).toDouble();
 
             if (rating == 1) {
-              onestarRating = onestarRating + overallSentimentScore;
-              onestarRatingCount = onestarRatingCount + 1;
+              onestarRating += overallSentimentScore;
+              onestarRatingCount += 1;
             } else if (rating == 2) {
-              twostarRating = twostarRating + overallSentimentScore;
-              twostarRatingCount = twostarRatingCount + 1;
+              twostarRating += overallSentimentScore;
+              twostarRatingCount += 1;
             } else if (rating == 3) {
-              threestarRating = threestarRating + overallSentimentScore;
-              threestarRatingCount = threestarRatingCount + 1;
+              threestarRating += overallSentimentScore;
+              threestarRatingCount += 1;
             } else if (rating == 4) {
-              fourstarRating = fourstarRating + overallSentimentScore;
-              fourstarRatingCount = fourstarRatingCount + 1;
+              fourstarRating += overallSentimentScore;
+              fourstarRatingCount += 1;
             } else if (rating == 5) {
-              fivestarRating = fivestarRating + overallSentimentScore;
-              fivestarRatingCount = fivestarRatingCount + 1;
+              fivestarRating += overallSentimentScore;
+              fivestarRatingCount += 1;
             } else {
               print('rating not found');
             }
@@ -1305,11 +1310,10 @@ Future<Map<String, double>> returnSentiment(String timeRange, String selectedFoo
       for (var doc in querySnapshot.docs) {
         DateTime createdAt = DateTime.parse(doc.data()?['createdAt']);
         if (createdAt.isAfter(startDate) && createdAt.isBefore(DateTime.now())) {
-          positive = (doc.data()?['positive'] ?? 0).toDouble(); // Convert to double
-          neutral = (doc.data()?['neutral'] ?? 0).toDouble(); // Convert to double
-          negative = (doc.data()?['negative'] ?? 0).toDouble(); // Convert to double
+          positive = (doc.data()?['positive'] ?? 0).toDouble();
+          neutral = (doc.data()?['neutral'] ?? 0).toDouble();
+          negative = (doc.data()?['negative'] ?? 0).toDouble();
 
-          // Check if values are not zero before adding to sentimentCount
           if (positive > 0 || neutral > 0 || negative > 0) {
             sentimentCount['positive'] = (sentimentCount['positive'] ?? 0) + positive;
             sentimentCount['negative'] = (sentimentCount['negative'] ?? 0) + negative;
@@ -1333,6 +1337,7 @@ Future<Map<String, double>> returnSentiment(String timeRange, String selectedFoo
         neutral = (doc.data()?['neutral'] ?? 0).toDouble(); // Convert to double
         negative = (doc.data()?['negative'] ?? 0).toDouble(); // Convert to double
 
+        // Check if values are not zero before adding to sentimentCount
         if (positive > 0 || neutral > 0 || negative > 0) {
           sentimentCount['positive'] = (sentimentCount['positive'] ?? 0) + positive;
           sentimentCount['negative'] = (sentimentCount['negative'] ?? 0) + negative;
@@ -1354,7 +1359,8 @@ Future<Map<String, double>> returnSpecificDaySentiment(String specificDay, Strin
     'neutral': 0,
   };
   List menu = await getMenu();
-  print("this is the menu ${menu}");
+
+
   double positive = 0;
   double negative = 0;
   double neutral = 0;
@@ -1372,13 +1378,12 @@ Future<Map<String, double>> returnSpecificDaySentiment(String specificDay, Strin
       for (var doc in querySnapshot.docs) {
         String? createdAt = doc.data()?['createdAt'].toString().split(' ')[0];
         if (createdAt == specificDay) {
-          positive = doc.data()?['positive'];
-          neutral = doc.data()?['neutral'];
-          negative = doc.data()?['negative'];
+          positive = (doc.data()?['positive'] ?? 0).toDouble(); // Convert to double
+          neutral = (doc.data()?['neutral'] ?? 0).toDouble(); // Convert to double
+          negative = (doc.data()?['negative'] ?? 0).toDouble(); // Convert to double
 
-          if (positive == 0 && neutral == 0 && negative == 0) {
-            continue;
-          } else {
+          // Check if values are not zero before adding to sentimentCount
+          if (positive > 0 || neutral > 0 || negative > 0) {
             sentimentCount['positive'] = (sentimentCount['positive'] ?? 0) + positive;
             sentimentCount['negative'] = (sentimentCount['negative'] ?? 0) + negative;
             sentimentCount['neutral'] = (sentimentCount['neutral'] ?? 0) + neutral;

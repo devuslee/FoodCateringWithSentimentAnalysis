@@ -105,11 +105,14 @@ class _SpecificDayAnalysisState extends State<SpecificDayAnalysis> {
       rating = await returnSpecificDayRating(selectedTime, selectedFood);
       totalReviews = await returnSpecificDayTotalReview(selectedTime, selectedFood);
       totalSale = await returnSpecificDaySale(selectedTime, selectedFood);
+
       overallSentiment = await returnSpecificDaySentiment(selectedTime, selectedFood);
+
       wordCloud = await returnSpecificDayWordCloud(selectedTime, selectedFood);
       counter = await returnSpecificDayWordCloudCounter(selectedTime, selectedFood);
       bardata = await returnSpecificDayWordFrequency(selectedTime, selectedFood);
       bardataMax = await returnSpecificDayMaxXWordFrequency(selectedTime, selectedFood);
+
       menuRating = await returnSpecificDayMenuRating(selectedTime, selectedFood);
 
       sentimentRating = await returnSpecificDaySentimentRating(selectedTime, selectedFood);

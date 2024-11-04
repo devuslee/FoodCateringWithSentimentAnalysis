@@ -311,12 +311,11 @@ class _AnalysisPageState extends State<AnalysisPage> {
                   SizedBox(width: MediaQuery.of(context).size.width * 0.01),
                   DropdownButton(
                     padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01),
-                    value: firstCategory,
+                    value: selectedFood,
                     items: categoryItems.map((e) => DropdownMenuItem(child: Text(e), value: e)).toList(),
                     onChanged: (value) {
                       setState(() {
-                        firstCategory = value.toString();
-                        selectedFood = firstCategory;
+                        selectedFood = value.toString();
                         updateCategory();
                       });
                     },

@@ -31,14 +31,11 @@ class _ConfirmOrderQrScannerState extends State<ConfirmOrderQrScanner> {
   void initState() {
     super.initState();
     counter = 0;
-    print("desiredpickuptime ${widget.desiredPickupTime}");
   }
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
-      print("Scanned Code: ${scanData.code}");
-      print("Order ID: ${widget.orderID}");
 
       if (scanData.code!.split(' ')[1] == widget.orderID.toString()) {
         if (counter == 0) {
